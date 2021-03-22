@@ -1,7 +1,7 @@
 ; Intel syntax
 ; I know, there are a lot of comments.  I'm a newbie to Intel syntax and x86 assembly 
 
-ORG 0x7c00	; This is odd, I don't think it's actually needed
+ORG 0x7c00	
 BITS 16		; Tells the assembler we are using a 16 bit architecture
 
 start:
