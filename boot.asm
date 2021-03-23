@@ -1,10 +1,21 @@
 ; Intel syntax
 ; I know, there are a lot of comments.  I'm a newbie to Intel syntax and x86 assembly 
 
-ORG 0x7c00	
+ORG 0	
 BITS 16		; Tells the assembler we are using a 16 bit architecture
 
+jmp 0x7c0:start 	; sets the code segment register
+
 start:
+	cli		; clear interrupts (so that they're disabled while we change segment registers)
+	mov ax, 0x7c0
+	mov ds, ax	; setup data segment.  note that data segment will start at 0x7c0 * 16 + 0, or 0x7c00, which is the location that BIOS jumps to for execution of bootloader
+	mov es, ax	; setup extra segment
+	mov ax, 0x00
+	mov ss, ax
+	mov sp, 0x7c00 ; remember from before: 0x7c00 is the address that RAM will jump to execute bootloader.  ss * 16 + sp = 0x7c00
+
+	sti		; enables interrupts
 	mov si, message ; si stands for source index. 16 bit low end of esi register
 	call print
 	jmp $		; infinite loop.  $ evaluates to the assembly position at the beginning of this line
