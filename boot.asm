@@ -4,9 +4,16 @@
 ORG 0	
 BITS 16		; Tells the assembler we are using a 16 bit architecture
 
-jmp 0x7c0:start 	; sets the code segment register
+_start:		; the following instructions signify the start of the boot record (look at wiki.osdev.org/FAT)
+	jmp short start
+	nop
+
+times 33 db 0		; creates 33 bytes after previous nop instruction to fill our boot record with arbitrary values
 
 start:
+	jmp 0x7c0:step2 	; sets the code segment register to 0x7c0
+
+step2:
 	cli		; clear interrupts (so that they're disabled while we change segment registers)
 	mov ax, 0x7c0
 	mov ds, ax	; setup data segment.  note that data segment will start at 0x7c0 * 16 + 0, or 0x7c00, which is the location that BIOS jumps to for execution of bootloader
