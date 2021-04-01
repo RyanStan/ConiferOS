@@ -13,13 +13,6 @@ times 33 db 0		; creates 33 bytes after previous nop instruction to fill our boo
 start:
 	jmp 0x7c0:step2 	; sets the code segment register to 0x7c0
 
-handle_zero:		; responsible for handling interrupt 0.  We are going to overwrite the 0th entry in the IVT so that this interrupt is ran instead of the divide by 0 code.
-	mov ah, 0eh
-	mov al, 'A'
-	mov bx, 0x00
-	int 0x10
-	iret
-
 step2:
 	cli		; clear interrupts (so that they're disabled while we change segment registers)
 	mov ax, 0x7c0
@@ -30,13 +23,6 @@ step2:
 	mov sp, 0x7c00 ; remember from before: 0x7c00 is the address that RAM will jump to execute bootloader.  ss * 16 + sp = 0x7c00
 
 	sti		; enables interrupts
-
-	mov word[ss:0x00], handle_zero ; if we don't use the stack segment, the data segment will be used.  We want address 0 since that is the start of the 0th entry
-				       ; in the interrupt vector table (for interrupt #0).  
-				       ; this moves the address of handle_zero into two bytes (a word) starting at physical memory address 0x00 (offset field of the 0th IVT entry).
-	mov word[ss:0x02], 0x7c0       ; word[ss:0x02] refers to two bytes at memory address 0x02 which is the segment field of the 0th interrupt vector table entry.
-
-	int 0
 
 	mov si, message ; si stands for source index. 16 bit low end of esi register
 	call print
