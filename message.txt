@@ -1,0 +1,1 @@
+Since boot.bin is 512 bytes long and a sector is 512 bytes, this message will get appended to start of 2nd sector (the emulator thinks boot.bin is a disk)
