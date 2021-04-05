@@ -103,6 +103,11 @@ load32:
 
 	; We are now running in protected mode!
 	
+	; Enable the A20 line
+	in al, 0x92		; for description of in and out instructions, see the chapter on input/output in the IA-32 Software Developer's Manual
+	or al, 2		; in reads from a port and out writes to a port (actually writes to IO address space I believe - specific port is a feature of the chipset)
+	out 0x92, al
+	
 	jmp $
 
 
