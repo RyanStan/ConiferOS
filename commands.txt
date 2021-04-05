@@ -2,6 +2,13 @@ nasm -f bin ./boot.asm -o boot.bin
 
 qemu-system-x86_64 -hda ./boot.bin
 
-todo: create a makefile with these commands
+How to run with gdb:
+	make sure to use tmux and split panes
+	in one pane run: 'qemu-system-x86_64 -s -S -hda ./boot.bin'
 
+	in the other pane run: 'gdb'.  Then in gdb: 'target remote localhost:1234'
+
+Helpful gdb commands:
+	'layout asm'
+	'info registers'
 
