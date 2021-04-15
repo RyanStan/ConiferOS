@@ -35,8 +35,7 @@ step2:
 	mov eax, cr0
 	or al, 0x1	; set PE (Protection Enable) bit in CR0 (control register 0)
 	mov cr0, eax
-	; jmp CODE_SEG:load32 ; sets the code segment selector to CODE_SEG and jumps to load32
-	jmp $
+	jmp CODE_SEG:load32 ; sets the code segment selector to CODE_SEG and jumps to load32
 
 ; GDT
 gdt_start:
@@ -90,7 +89,78 @@ print_char:
 message:
 	db 'StinkOS is booting...', 0
 
+[BITS 32]
+load32:
+	; in 32 bit mode here
+	; the goal is to load our kernel into memory and jump to it
+	mov eax, 1		; eax will contain the starting sector we want to load from (0 is boot sector)
+	mov ecx, 100		; ecx will contain the total number of sectors we want to load
+	mov edi, 0x0100000	; edi will contain the address we want to load these sectors in to (1 MB)
+	call ata_lba_read	; ata_lba_read is the label that will talk with the drive and load the sectors into memory
+	jmp CODE_SEG:0x0100000 	; jump to 1 MB which is the location where we've read the kernel sectors into memory
 
+ata_lba_read:
+	; ata/ide is a protocol for communicating with disk drives attached via the motherboard to CPU
+	mov ebx, eax ; backup the logical block address (lba) 
+	; send the highest 8 bits of the lba to disk controller
+	shr eax, 24		; shift the eax register 24 bits to the right so that eax contains highest 8 bits of the lba (shr does not wrap)
+	or eax, 0xE0		; selects the master drive
+	mov dx, 0x01F6		; 0x01F6 is the port that we're expected to write these 8 bits to
+	out dx, al		; al contains the 8 high bits from earlier.  
+				; out instruction copies the value from al to the I/O port specified by dx (copies the address and value to the I/O bus on the motherboard)
+	; Finished sending the highest 8 bits of the lba
+
+	; send the total number of sectors that we are reading to the hard disk controller
+	mov eax, ecx
+	mov dx, 0x01F2
+	out dx, al
+	; finished sending the total sectors to read
+	
+	; send more bits of the lba
+	mov eax, ebx		; restore the backup lba
+	mov dx, 0x01F3
+	out dx, al
+	; finished sending more bits of the lba
+
+	; Send more bits of the lba
+	mov dx, 0x01F4
+	mov eax, ebx 		; restore the backup lba (do this each time we edit it to be safe)
+	shr eax, 8
+	out dx, al
+	; Finished sending more bits of the lba
+
+	; Send upper 16 bits of the lba
+	mov dx, 0x1F5
+	mov eax, ebx		; restore the backup lba
+	shr eax, 16 
+	out dx, al
+	; Finished sending upper 16 bits of the LBA
+
+	mov dx, 0x01F7
+	mov al, 0x20
+	out dx, al
+
+	; Read all sectors into memory
+.next_sector:
+	push ecx	; push ecx onto the stack to save for later (remember it has the total # of sectors we want to read)
+
+; checking if we need to read
+.try_again:
+	mov dx, 0x01F7	
+	in al, dx	; we read into al from the port specified by dx
+	test al, 8	; check to see if this bit is set in al
+	jz .try_again	; jumps back to try_again if test fails
+
+; we need to read 256 words (512 bytes, or one sector) at a time
+ 	mov ecx, 256
+	mov dx, 0x01F0
+	rep insw	; reads word from I/O port specified by dx into memory location specified by ES:(E)DI
+			; rep insw reads a word from port 0x01F0 and stores it into 0x0100000 (1 MB, specified by edi)
+	pop ecx		; restores the ecx that we saved via push earlier 
+	loop .next_sector	; decrements ecx register (contains # registers to read) until it hits 0 and we've read all sectors
+	; End of reading sectors from disk into memory
+	ret
+	
 
 times 510-($ - $$) db 0 ; pad our code with 0s up to 510 bytes
 dw 0xAA55		; Intel machines are little endian so this will be flipped to 0x55AA

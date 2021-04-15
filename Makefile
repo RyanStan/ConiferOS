@@ -32,7 +32,7 @@ build/kernel.asm.o:  src/kernel.asm
 	nasm -f elf -g src/kernel.asm -o build/kernel.asm.o
 
 run:
-	qemu-system-x86_64 -hda bin/boot.bin
+	qemu-system-x86_64 -hda bin/os.bin
 
 clean:
 	rm -rf bin/boot.bin
