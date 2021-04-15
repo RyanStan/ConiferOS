@@ -2,6 +2,8 @@ nasm -f bin ./boot.asm -o boot.bin
 
 qemu-system-x86_64 -hda ./boot.bin
 
+ndisasm kernel.bin
+
 How to run with gdb:
 	make sure to use tmux and split panes
 	in one pane run: 'qemu-system-x86_64 -s -S -hda ./boot.bin'
@@ -11,4 +13,5 @@ How to run with gdb:
 Helpful gdb commands:
 	'layout asm'
 	'info registers'
+
 
