@@ -10,9 +10,14 @@
 # 		  using gcc since in the future we will be compiling c files in with this command.  When an object file is passed to gcc, gcc
 # 		  skips compilation and instead directly invokes the linker (i686-elf-ld)
 #
+#	not entirely sure if we actually need fomit-frame-pointer flag for gcc
+#	some of the flags I included are probably redundant and some don't actually show up in the man page
+#
 
 SHELL = /bin/sh
-MODULES = build/kernel.asm.o
+MODULES = build/kernel.asm.o build/kernel.o
+INCLUDES = ./src
+FLAGS = -g -ffreestanding -falign-jumps -falign-functions -falign-labels -falign-loops -fstrength-reduce -fomit-frame-pointer -finline-functions -Wno-unused-function -fno-builtin -Werror -Wno-unused-label -Wno-cpp -Wno-unused-parameter -nostdlib -nostartfiles -nodefaultlibs -Wall -O0 -Iinc
 
 #TODO: add environment variables from build.sh so I don't need to use that script
 
@@ -23,13 +28,16 @@ all: bin/boot.bin bin/kernel.bin
 
 bin/kernel.bin: $(MODULES)
 	i686-elf-ld -g -relocatable $(MODULES) -o build/kernelfull.o
-	i686-elf-gcc -T src/linker.ld -o bin/kernel.bin -ffreestanding -O0 -nostdlib build/kernelfull.o
+	i686-elf-gcc $(FLAGS) -T src/linker.ld -o bin/kernel.bin -ffreestanding -O0 -nostdlib build/kernelfull.o
 	
 bin/boot.bin: src/boot/boot.asm
 	nasm -f bin src/boot/boot.asm -o bin/boot.bin
 
 build/kernel.asm.o:  src/kernel.asm
 	nasm -f elf -g src/kernel.asm -o build/kernel.asm.o
+
+build/kernel.o: src/kernel.c
+	i686-elf-gcc -I $(INCLUDES) $(FLAGS) -c src/kernel.c -o build/kernel.o
 
 run:
 	qemu-system-x86_64 -hda bin/os.bin
