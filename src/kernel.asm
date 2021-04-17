@@ -1,6 +1,8 @@
 [BITS 32]		; all code below here is seen as 32-bit code.  The brackets indicate a primitive directive
 global _start
 
+; should be in text section - must be very first code in our kernelfull object file
+
 CODE_SEG equ 0x08	; these are the offsets into the GDT for the respective segment descriptors
 DATA_SEG equ 0x10
 
@@ -23,3 +25,6 @@ _start:
 	
 	jmp $
 
+; since this assembly file will be in the first section of our final linked executable, we need it to be properly aligned so that the 
+; following compiled c code works and is also properly aligned
+times 512-($ - $$) db 0
