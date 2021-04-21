@@ -1,6 +1,6 @@
 [BITS 32]		; all code below here is seen as 32-bit code.  The brackets indicate a primitive directive
 global _start
-extern kernel_start
+extern kernel_main
 
 ; should be in text section - must be very first code in our kernelfull object file
 
@@ -24,7 +24,7 @@ _start:
 	or al, 2		; in reads from a port and out writes to a port (actually writes to IO address space I believe - specific port is a feature of the chipset)
 	out 0x92, al
 	
-	call kernel_start
+	call kernel_main
 	jmp $
 
 ; since this assembly file will be in the first section of our final linked executable, we need it to be properly aligned so that the 
