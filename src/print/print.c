@@ -6,6 +6,10 @@
 
 /* TODO: add function comments and make things more clear (i.e. the names of functions) */
 
+/* Since we don't have paging enabled or any sort of virtual memory,
+ * we are literally writing to the address 0xB80000 which is (historically and conventionally) mapped to the video frame buffer by the BIOS
+ * 
+ */
 static uint16_t* video_mem = (uint16_t*)(0xB8000);
 
 uint16_t terminal_make_char(char c, char color)
