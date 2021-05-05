@@ -15,7 +15,7 @@
 #
 
 SHELL = /bin/sh
-MODULES = build/kernel.asm.o build/kernel.o
+MODULES = build/kernel.asm.o build/kernel.o build/print.o
 INCLUDES = ./src
 FLAGS = -g -ffreestanding -falign-jumps -falign-functions -falign-labels -falign-loops -fstrength-reduce -fomit-frame-pointer -finline-functions -Wno-unused-function -fno-builtin -Werror -Wno-unused-label -Wno-cpp -Wno-unused-parameter -nostdlib -nostartfiles -nodefaultlibs -Wall -O0 -Iinc
 
@@ -38,6 +38,9 @@ build/kernel.asm.o:  src/kernel.asm
 
 build/kernel.o: src/kernel.c
 	i686-elf-gcc -I $(INCLUDES) $(FLAGS) -c src/kernel.c -o build/kernel.o
+
+build/print.o: src/print/print.c
+	i686-elf-gcc -I $(INCLUDES) $(FLAGS) -c src/print/print.c -o build/print.o
 
 run:
 	qemu-system-x86_64 -hda bin/os.bin
