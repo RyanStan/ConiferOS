@@ -1,14 +1,9 @@
-BOOT_ASM = src/boot/boot.asm
-BOOT_BIN = bin/boot.bin
-
-boot.bin: $(BOOT_ASM)
-	nasm -f bin $(BOOT_ASM) -o $(BOOT_BIN)
+boot.bin: src/boot/boot.asm
+	nasm -f bin src/boot/boot.asm -o bin/boot.bin
 
 run:
-	qemu-system-x86_64 -hda $(BOOT_BIN)
+	qemu-system-x86_64 -hda bin/boot.bin
 
 clean:
-	rm -rf $(BOOT_BIN)
+	rm -rf bin/boot.bin
 
-hex: 
-	bless $(BOOT_BIN)
