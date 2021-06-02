@@ -24,7 +24,7 @@ FLAGS = -g -ffreestanding -falign-jumps -falign-functions -falign-labels -falign
 all: bin/disk.img
 
 bin/disk.img: bin/os.bin
-	cp bin/boot.bin bin/disk.img
+	cp bin/os.bin bin/disk.img
 
 bin/os.bin: bin/boot.bin bin/kernel.bin
 	dd if=bin/boot.bin > bin/os.bin
@@ -56,5 +56,6 @@ clean:
 	rm -rf bin/os.bin
 	rm -rf build/kernelfull.o
 	rm -rf ${MODULES}
+	rm -rf bin/disk.img
 
 
