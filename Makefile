@@ -21,7 +21,12 @@ FLAGS = -g -ffreestanding -falign-jumps -falign-functions -falign-labels -falign
 
 #TODO: add environment variables from build.sh so I don't need to use that script
 
-all: bin/boot.bin bin/kernel.bin
+all: bin/disk.img
+
+bin/disk.img: bin/os.bin
+	cp bin/boot.bin bin/disk.img
+
+bin/os.bin: bin/boot.bin bin/kernel.bin
 	dd if=bin/boot.bin > bin/os.bin
 	dd if=bin/kernel.bin >> bin/os.bin
 	dd if=/dev/zero bs=512 count=100 >> bin/os.bin # Fills up rest of disk with 100 sector sized blocks of zeros (we'll be loading our kernel in eventually over these null sectors)
@@ -43,7 +48,7 @@ build/print.o: src/print/print.c
 	i686-elf-gcc -I $(INCLUDES) $(FLAGS) -c src/print/print.c -o build/print.o
 
 run:
-	qemu-system-x86_64 -hda bin/os.bin
+	qemu-system-x86_64 -drive file=bin/disk.img,index=0,media=disk,format=raw
 
 clean:
 	rm -rf bin/boot.bin
