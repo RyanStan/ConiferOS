@@ -1,5 +1,6 @@
 [BITS 32]		; all code below here is seen as 32-bit code.  The brackets indicate a primitive directive
 global _start
+global  problem
 extern kernel_main
 
 ; should be in text section - must be very first code in our kernelfull object file
@@ -26,6 +27,9 @@ _start:
 	
 	call kernel_main
 	jmp $
+
+problem:			; for testing the proper setup of our idt
+	int 0
 
 ; since this assembly file will be in the first section of our final linked executable, we need it to be properly aligned so that the 
 ; following compiled c code works and is also properly aligned
