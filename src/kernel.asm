@@ -28,8 +28,6 @@ _start:
 	call kernel_main
 	jmp $
 
-problem:			; for testing the proper setup of our idt
-	int 0
 
 ; since this assembly file will be in the first section of our final linked executable, we need it to be properly aligned so that the 
 ; following compiled c code works and is also properly aligned
