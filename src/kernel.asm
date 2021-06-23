@@ -24,6 +24,17 @@ _start:
 	in al, 0x92		; for description of in and out instructions, see the chapter on input/output in the IA-32 Software Developer's Manual
 	or al, 2		; in reads from a port and out writes to a port (actually writes to IO address space I believe - specific port is a feature of the chipset)
 	out 0x92, al
+
+	; Remap the master PIC (Assuming that QEMU is emulating a 8259 PIC for us as opposed to a more modern I/O and local APICs)
+	mov al, 00010001b	
+	out 0x20, al		; send 10001b (initialization mode command) to I/O port 0x20 which is Master PIC - Command
+
+	mov al, 0x20 		; Interrupt 0x20 is where master ISR should start
+	out 0x21, al
+
+	mov al, 00000001b	
+	out 0x21, al		; End initialization mode
+	; End remap of the master PIC
 	
 	call kernel_main
 	jmp $

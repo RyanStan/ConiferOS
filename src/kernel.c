@@ -10,6 +10,5 @@ void kernel_main()
 	idt_init();
 	print("Welcome to ConiferOS");
 
-	outb(0x60, 0xff);
 	return;
 }
