@@ -15,7 +15,7 @@
 #
 
 SHELL = /bin/sh
-MODULES = build/kernel.asm.o build/kernel.o build/print.o build/idt/idt.asm.o build/idt/idt.o build/memory/memory.o build/io/io.asm.o
+MODULES = build/kernel.asm.o build/kernel.o build/print.o build/idt/idt.asm.o build/idt/idt.o build/memory/memory.o build/io/io.asm.o  build/memory/heap/heap.o build/memory/heap/kernel_heap.o
 INCLUDES = ./src
 FLAGS = -g -ffreestanding -falign-jumps -falign-functions -falign-labels -falign-loops -fstrength-reduce -fomit-frame-pointer -finline-functions -Wno-unused-function -fno-builtin -Werror -Wno-unused-label -Wno-cpp -Wno-unused-parameter -nostdlib -nostartfiles -nodefaultlibs -Wall -O0 -Iinc
 
@@ -59,9 +59,14 @@ build/memory/memory.o: src/memory/memory.c
 build/io/io.asm.o:  src/io/io.asm
 	nasm -f elf -g src/io/io.asm -o build/io/io.asm.o
 
+build/memory/heap/heap.o: src/memory/heap/heap.c
+	i686-elf-gcc -I $(INCLUDES) src/memory/heap $(FLAGS) -c src/memory/heap/heap.c -o build/memory/heap/heap.o
+
+build/memory/heap/kernel_heap.o: src/memory/heap/kernel_heap.c
+	i686-elf-gcc -I $(INCLUDES) src/memory/heap $(FLAGS) -c src/memory/heap/kernel_heap.c -o build/memory/heap/kernel_heap.o
 
 run:
-	qemu-system-x86_64 -drive file=bin/disk.img,index=0,media=disk,format=raw
+	qemu-system-i386 -drive file=bin/disk.img,index=0,media=disk,format=raw
 
 clean:
 	rm -rf bin/boot.bin
