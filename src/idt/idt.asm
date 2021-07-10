@@ -6,6 +6,16 @@ extern int_generic_handler
 global idt_load
 global int21h_entry
 global int_generic_entry
+global enable_interrupts
+global disable_interrupts
+
+enable_interrupts:
+	sti 
+	ret
+
+disable_interrupts:
+	cli 
+	ret
 
 idt_load:
 	push ebp			; preserve the caller's frame pointer by pushing it onto the stack

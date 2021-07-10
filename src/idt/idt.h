@@ -17,5 +17,9 @@ void idt_set(int i, void *handler);
 
 void idt_init();
 
+void enable_interrupts();
+
+void disable_interrupts();
+
 
 #endif /* IDT_H */

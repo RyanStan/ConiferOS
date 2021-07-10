@@ -35,8 +35,6 @@ _start:
 	mov al, 00000001b	
 	out 0x21, al		; End initialization mode
 	; End remap of the master PIC
-
-	sti			; Enable interrupts (TODO: move this.  Need to enable interrupts only after setting up IDT.  error will occur if interrupt arrives early)
 	
 	call kernel_main
 	jmp $
