@@ -121,6 +121,15 @@ void* heap_block_to_address(struct heap_desc *heap, uint32_t block_index)
 }
 
 /*
+ * heap_address_to_block
+ * calculates the block index of the block in heap at addr
+ */
+int heap_address_to_block(struct heap_desc *heap, void *addr)
+{
+	return (int)(addr - heap->start_addr) / HEAP_BLOCK_SIZE;
+}
+
+/*
  * heap_mark_blocks_taken
  * Update the heap entry table corresponding with heap so that
  * total_blocks starting at block_index are marked as taken with the correct flags as described
@@ -145,6 +154,21 @@ int heap_mark_blocks_taken(struct heap_desc *heap, int start_block_index, size_t
 		}
 	}
 
+	return 0;
+}
+
+int heap_mark_blocks_free(struct heap_desc *heap, int start_block_index)
+{
+	hbte_t entry;
+	int i;
+	
+	for (i = start_block_index; i < (int)heap->table->total_entries; i++) {
+		entry = heap->table->entries[i];
+		heap->table->entries[i] = HEAP_BLOCK_TABLE_ENTRY_FREE;
+
+		if (!(entry & HEAP_BLOCK_HAS_NEXT)) 
+			break;
+	}
 	return 0;
 }
 
@@ -173,8 +197,8 @@ void* heap_malloc(struct heap_desc *heap, size_t size)
 	return heap_malloc_blocks(heap, total_blocks);
 }
 
-/* TODO: implement this function */
 int heap_free(struct heap_desc *heap, void *ptr)
 {
+	heap_mark_blocks_free(heap, heap_address_to_block(heap, ptr));
 	return 0;
 }
