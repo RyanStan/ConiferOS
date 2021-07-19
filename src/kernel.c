@@ -1,4 +1,4 @@
-int kernel_main()
+void kernel_main()
 {
 	int a;
 	int b;
@@ -6,5 +6,5 @@ int kernel_main()
 	a = 5;
 	b = a * 3;
 
-	return 0;
+	return;
 }
