@@ -14,13 +14,13 @@ bin/boot.bin: src/boot/boot.asm
 	nasm -f bin src/boot/boot.asm -o bin/boot.bin
 
 bin/kernel: src/kernel.c
-	i686-elf-gcc $(FLAGS) src/kernel.c -o bin/kernel
+	i686-elf-gcc $(FLAGS) -T src/linker.ld src/kernel.c -o bin/kernel
 
 run:
-	qemu-system-x86_64 -drive file=bin/disk.img,index=0,media=disk,format=raw
+	qemu-system-i386 -drive file=bin/disk.img,index=0,media=disk,format=raw
 
 clean:
 	rm -f bin/boot.bin
-	rm -f build/kernel.o
+	rm -f bin/kernel
 	rm -f bin/disk.img
 
