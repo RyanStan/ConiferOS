@@ -1,12 +1,12 @@
-nasm -f bin ./boot.asm -o boot.bin
-
-qemu-system-x86_64 -hda ./boot.bin
+qemu-system-i386 -drive file=bin/disk.img,index=0,media=disk,format=raw
 
 How to run with gdb:
 	make sure to use tmux and split panes
-	in one pane run: 'qemu-system-x86_64 -s -S -hda ./boot.bin'
+	in one pane run: 'qemu-system-i386 -s -S -drive file=bin/disk.img,index=0,media=disk,format=raw'
 
-	in the other pane run: 'gdb'.  Then in gdb: 'target remote localhost:1234'
+	Then in gdb: 
+		'add-symbol-file build/kernel.o 0x100000'
+		'target remote localhost:1234'
 
 Helpful gdb commands:
 	'layout asm'
