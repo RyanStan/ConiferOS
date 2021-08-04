@@ -29,4 +29,5 @@ clean:
 	rm -f bin/kernel.bin
 	rm -f bin/disk.img
 	rm -f bin/disk.bin
+	rm -f build/kernel.o
 
