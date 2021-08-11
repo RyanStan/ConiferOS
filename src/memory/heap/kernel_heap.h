@@ -1,3 +1,8 @@
+/*
+ * kernel_heap
+ * implementation of heap interface
+ */
+
 #ifndef KERNEL_HEAP_H
 #define KERNEL_HEAP_H
 

@@ -1,11 +1,13 @@
+/* heap.h
+ * interface for creating a heap
+ */
+
 #ifndef HEAP_H
 #define HEAP_H
 
 #include "config.h"
 #include <stdint.h>
 #include <stddef.h>
-
-/* TODO: create readme that describes the heap algorithm */
 
 #define HEAP_BLOCK_TABLE_ENTRY_FREE 	0x00
 #define HEAP_BLOCK_TABLE_ENTRY_TAKEN 	0x01
