@@ -1,5 +1,6 @@
 #include "memory/paging/paging.h"
 #include "memory/heap/kernel_heap.h"
+#include "status.h"
 
 // instead of paging_new_4gb it seems much cleaner to just have an initialize paging function 
 // paging_4gb_chunk seems like a weird way of doing it
@@ -48,6 +49,45 @@ void paging_switch(uint32_t* pgd)
         paging_load_pgd(pgd);
         current_pgd = pgd;
 }
+
+bool paging_is_aligned(void *addr)
+{
+        return (uint32_t)addr % PAGING_PAGE_SIZE == 0;
+}
+
+int paging_get_indexes(void *virtual_address, uint32_t *pgd_index_out, uint32_t *table_index_out)
+{
+        if (!paging_is_aligned(virtual_address)) {
+                return -EINVARG;
+        }
+
+        /* TODO: Could also get the following two values by looking at the relevant 10 bits of virtual address (I think this would be better code) */
+        *pgd_index_out = (uint32_t)virtual_address / (PAGING_TABLE_ENTRIES * PAGING_PAGE_SIZE);           
+        *table_index_out = (uint32_t)virtual_address % (PAGING_TABLE_ENTRIES * PAGING_PAGE_SIZE) / PAGING_PAGE_SIZE;
+
+        return 0;
+}
+
+int paging_set(uint32_t *pgd, void *virtual_address, uint32_t val)
+{
+        if (!paging_is_aligned(virtual_address)) {
+                return -EINVARG;
+        }
+
+        uint32_t pgd_index = 0;
+        uint32_t table_index = 0;
+        int rc = paging_get_indexes(virtual_address, &pgd_index, &table_index);
+        if (rc < 0) {
+                return rc;
+        }
+
+        uint32_t pgd_entry = pgd[pgd_index];
+        uint32_t *table = (uint32_t*)(pgd_entry & PGD_ENTRY_TABLE_ADDR);
+        table[table_index] = val;
+
+        return 0;
+}
+
 
 // need to implement past 18 minute mark
 // my question: we have one pgd with 1024 entries and each of those entries points to a page table.  Thus, we have 1024 * 1024 page table entries, or 1,048,576 pages.
