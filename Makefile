@@ -1,8 +1,7 @@
 # 	NOTES
 #
-# 	os.bin is the flat hard disk that the emulator will see
+# 	bin/disk.img is the flat hard disk that the emulator will see
 #
-# 	our only module right now is kernel.asm but in the future that will change
 #
 # 	what the bin/kernel.bin target recipe is doing:
 # 		-the first command links together all our object files into another large intermediary relocatable object file (build/kernelfull.o)
@@ -10,12 +9,10 @@
 # 		  using gcc since in the future we will be compiling c files in with this command.  When an object file is passed to gcc, gcc
 # 		  skips compilation and instead directly invokes the linker (i686-elf-ld)
 #
-#	not entirely sure if we actually need fomit-frame-pointer flag for gcc
-#	some of the flags I included are probably redundant and some don't actually show up in the man page
 #
 
 SHELL = /bin/sh
-MODULES = build/kernel.asm.o build/kernel.o build/print.o build/idt/idt.asm.o build/idt/idt.o build/memory/memory.o build/io/io.asm.o  build/memory/heap/heap.o build/memory/heap/kernel_heap.o
+MODULES = build/kernel.asm.o build/kernel.o build/print.o build/idt/idt.asm.o build/idt/idt.o build/memory/memory.o build/io/io.asm.o  build/memory/heap/heap.o build/memory/heap/kernel_heap.o build/memory/paging/paging.o build/memory/paging/paging.asm.o
 INCLUDES = ./src
 FLAGS = -g -ffreestanding -falign-jumps -falign-functions -falign-labels -falign-loops -fstrength-reduce -fomit-frame-pointer -finline-functions -Wno-unused-function -fno-builtin -Werror -Wno-unused-label -Wno-cpp -Wno-unused-parameter -nostdlib -nostartfiles -nodefaultlibs -Wall -O0 -Iinc
 
@@ -36,34 +33,40 @@ bin/kernel.bin: $(MODULES)
 	i686-elf-gcc $(FLAGS) -T src/linker.ld -o bin/kernel.bin -ffreestanding -O0 -nostdlib build/kernelfull.o
 	
 bin/boot.bin: src/boot/boot.asm
-	nasm -f bin src/boot/boot.asm -o bin/boot.bin
+	nasm -f bin $^ -o bin/boot.bin
 
 build/kernel.asm.o:  src/kernel.asm
-	nasm -f elf -g src/kernel.asm -o build/kernel.asm.o
+	nasm -f elf -g $^ -o build/kernel.asm.o
 
 build/kernel.o: src/kernel.c
-	i686-elf-gcc -I $(INCLUDES) $(FLAGS) -c src/kernel.c -o build/kernel.o
+	i686-elf-gcc -I $(INCLUDES) $(FLAGS) -c $^ -o build/kernel.o
 
 build/print.o: src/print/print.c
-	i686-elf-gcc -I $(INCLUDES) $(FLAGS) -c src/print/print.c -o build/print.o
+	i686-elf-gcc -I $(INCLUDES) $(FLAGS) -c $^ -o build/print.o
 
 build/idt/idt.asm.o:  src/idt/idt.asm
-	nasm -f elf -g src/idt/idt.asm -o build/idt/idt.asm.o
+	nasm -f elf -g $^ -o build/idt/idt.asm.o
 
 build/idt/idt.o: src/idt/idt.c
-	i686-elf-gcc -I $(INCLUDES) src/idt $(FLAGS) -c src/idt/idt.c -o build/idt/idt.o
+	i686-elf-gcc -I $(INCLUDES) src/idt $(FLAGS) -c $^ -o build/idt/idt.o
 
 build/memory/memory.o: src/memory/memory.c
-	i686-elf-gcc -I $(INCLUDES) src/memory $(FLAGS) -c src/memory/memory.c -o build/memory/memory.o
+	i686-elf-gcc -I $(INCLUDES) src/memory $(FLAGS) -c $^ -o build/memory/memory.o
 
 build/io/io.asm.o:  src/io/io.asm
-	nasm -f elf -g src/io/io.asm -o build/io/io.asm.o
+	nasm -f elf -g $^ -o build/io/io.asm.o
 
 build/memory/heap/heap.o: src/memory/heap/heap.c
-	i686-elf-gcc -I $(INCLUDES) src/memory/heap $(FLAGS) -c src/memory/heap/heap.c -o build/memory/heap/heap.o
+	i686-elf-gcc -I $(INCLUDES) src/memory/heap $(FLAGS) -c $^ -o build/memory/heap/heap.o
 
 build/memory/heap/kernel_heap.o: src/memory/heap/kernel_heap.c
-	i686-elf-gcc -I $(INCLUDES) src/memory/heap $(FLAGS) -c src/memory/heap/kernel_heap.c -o build/memory/heap/kernel_heap.o
+	i686-elf-gcc -I $(INCLUDES) src/memory/heap $(FLAGS) -c $^ -o build/memory/heap/kernel_heap.o
+
+build/memory/paging/paging.o: src/memory/paging/paging.c
+	i686-elf-gcc -I $(INCLUDES) src/memory/paging $(FLAGS) -c $^ -o build/memory/paging/paging.o
+
+build/memory/paging/paging.asm.o:  src/memory/paging/paging.asm
+	nasm -f elf -g $^ -o build/memory/paging/paging.asm.o
 
 run:
 	qemu-system-i386 -drive file=bin/disk.img,index=0,media=disk,format=raw
@@ -75,5 +78,6 @@ clean:
 	rm -rf build/kernelfull.o
 	rm -rf ${MODULES}
 	rm -rf bin/disk.img
+	
 
 

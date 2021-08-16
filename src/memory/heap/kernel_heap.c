@@ -2,6 +2,7 @@
 #include "heap.h"
 #include "config.h"
 #include "print/print.h"
+#include "memory/memory.h"
 
 struct heap_desc kernel_heap;			
 struct heap_entry_table kernel_heap_table;
