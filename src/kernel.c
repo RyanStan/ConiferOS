@@ -4,6 +4,7 @@
 #include "io/io.h"
 #include "memory/heap/kernel_heap.h"
 #include "memory/paging/paging.h"
+#include "disk/disk.h"
  
 static struct paging_desc* paging;
 
@@ -26,12 +27,9 @@ void kernel_main()
 
 	enable_paging();
 
-	char *ptr2 = (char*)0x1000;
-	ptr2[0] = 'A';
-	ptr2[1] = 'B';
-	/* Should see ABAB printed */
-	print(ptr2);
-	print(ptr);
+	/* Test disk read */
+	char buf[DISK_SECTOR_SIZE];
+	disk_read_sector(0, 1, buf);
 
 	enable_interrupts();
 

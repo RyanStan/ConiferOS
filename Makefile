@@ -12,7 +12,7 @@
 #
 
 SHELL = /bin/sh
-MODULES = build/kernel.asm.o build/kernel.o build/print.o build/idt/idt.asm.o build/idt/idt.o build/memory/memory.o build/io/io.asm.o  build/memory/heap/heap.o build/memory/heap/kernel_heap.o build/memory/paging/paging.o build/memory/paging/paging.asm.o
+MODULES = build/kernel.asm.o build/kernel.o build/print.o build/idt/idt.asm.o build/idt/idt.o build/memory/memory.o build/io/io.asm.o  build/memory/heap/heap.o build/memory/heap/kernel_heap.o build/memory/paging/paging.o build/memory/paging/paging.asm.o build/disk/disk.o
 INCLUDES = ./src
 FLAGS = -g -ffreestanding -falign-jumps -falign-functions -falign-labels -falign-loops -fstrength-reduce -fomit-frame-pointer -finline-functions -Wno-unused-function -fno-builtin -Werror -Wno-unused-label -Wno-cpp -Wno-unused-parameter -nostdlib -nostartfiles -nodefaultlibs -Wall -O0 -Iinc
 
@@ -33,40 +33,43 @@ bin/kernel.bin: $(MODULES)
 	i686-elf-gcc $(FLAGS) -T src/linker.ld -o bin/kernel.bin -ffreestanding -O0 -nostdlib build/kernelfull.o
 	
 bin/boot.bin: src/boot/boot.asm
-	nasm -f bin $^ -o bin/boot.bin
+	nasm -f bin $^ -o $@
 
 build/kernel.asm.o:  src/kernel.asm
-	nasm -f elf -g $^ -o build/kernel.asm.o
+	nasm -f elf -g $^ -o $@
 
 build/kernel.o: src/kernel.c
-	i686-elf-gcc -I $(INCLUDES) $(FLAGS) -c $^ -o build/kernel.o
+	i686-elf-gcc -I $(INCLUDES) $(FLAGS) -c $^ -o $@
 
 build/print.o: src/print/print.c
-	i686-elf-gcc -I $(INCLUDES) $(FLAGS) -c $^ -o build/print.o
+	i686-elf-gcc -I $(INCLUDES) $(FLAGS) -c $^ -o $@
 
 build/idt/idt.asm.o:  src/idt/idt.asm
-	nasm -f elf -g $^ -o build/idt/idt.asm.o
+	nasm -f elf -g $^ -o $@
 
 build/idt/idt.o: src/idt/idt.c
-	i686-elf-gcc -I $(INCLUDES) src/idt $(FLAGS) -c $^ -o build/idt/idt.o
+	i686-elf-gcc -I $(INCLUDES) src/idt $(FLAGS) -c $^ -o $@
 
 build/memory/memory.o: src/memory/memory.c
-	i686-elf-gcc -I $(INCLUDES) src/memory $(FLAGS) -c $^ -o build/memory/memory.o
+	i686-elf-gcc -I $(INCLUDES) src/memory $(FLAGS) -c $^ -o $@
 
 build/io/io.asm.o:  src/io/io.asm
-	nasm -f elf -g $^ -o build/io/io.asm.o
+	nasm -f elf -g $^ -o $@
 
 build/memory/heap/heap.o: src/memory/heap/heap.c
-	i686-elf-gcc -I $(INCLUDES) src/memory/heap $(FLAGS) -c $^ -o build/memory/heap/heap.o
+	i686-elf-gcc -I $(INCLUDES) src/memory/heap $(FLAGS) -c $^ -o $@
 
 build/memory/heap/kernel_heap.o: src/memory/heap/kernel_heap.c
-	i686-elf-gcc -I $(INCLUDES) src/memory/heap $(FLAGS) -c $^ -o build/memory/heap/kernel_heap.o
+	i686-elf-gcc -I $(INCLUDES) src/memory/heap $(FLAGS) -c $^ -o $@
 
 build/memory/paging/paging.o: src/memory/paging/paging.c
-	i686-elf-gcc -I $(INCLUDES) src/memory/paging $(FLAGS) -c $^ -o build/memory/paging/paging.o
+	i686-elf-gcc -I $(INCLUDES) src/memory/paging $(FLAGS) -c $^ -o $@
 
 build/memory/paging/paging.asm.o:  src/memory/paging/paging.asm
-	nasm -f elf -g $^ -o build/memory/paging/paging.asm.o
+	nasm -f elf -g $^ -o $@
+
+build/disk/disk.o: src/disk/disk.c
+	i686-elf-gcc -I $(INCLUDES) src/disk $(FLAGS) -c $^ -o $@
 
 run:
 	qemu-system-i386 -drive file=bin/disk.img,index=0,media=disk,format=raw
