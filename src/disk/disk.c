@@ -1,13 +1,20 @@
 #include "io/io.h"
+#include "disk.h"
+#include "memory/memory.h"
+#include "status.h"
 
 #define BUSY_BIT                0x0008                          // If the busy bit is set, the disk drive still has control of the command block
 #define ATA_COMMAND_IO_PORT     0x01F7
 #define ATA_DATA_PORT           0x01F0
 #define ATA_READ_SECTORS        0x0020
 
-#include "disk.h"
+struct disk disk;
 
-/* 
+/* Read sectors at lba 
+ * lba - the logical block address to read from
+ * total - the number of sectors to read
+ * buf - the buffer to store read data
+ * 
  * I'm still somewhat unsure as to where the specification with these ports is defined.
  * I'm just using OSDev as a resource for these now.
  * 
@@ -41,4 +48,29 @@ int disk_read_sector(int lba, int total, void *buf)
 
 
         return 0;
+}
+
+/* Doesn't do actual search yet.  Just here for the future when we have more disks than the physical hard drive */
+void disk_search_and_init()  
+{
+        memset(&disk, 0, sizeof(struct disk));
+        disk.type = REAL;
+        disk.sector_size = DISK_SECTOR_SIZE;
+}
+
+/* For now, since we only have one disk, the implementation is very basic */
+struct disk *disk_get(int index)
+{
+        if (index != 0)
+                return 0;
+
+        return &disk;
+}
+
+int disk_read_block(struct disk *idisk, unsigned int lba, int total, void *buf)
+{
+        if (idisk != &disk)
+                return -EIO;                            // disk wasn't initialized yet
+
+        return disk_read_sector(lba, total, buf);       // eventually, disk_read_sector will take in a base port # which it acquires from disk
 }
