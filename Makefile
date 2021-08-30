@@ -12,7 +12,7 @@
 #
 
 SHELL = /bin/sh
-MODULES = build/kernel.asm.o build/kernel.o build/print.o build/idt/idt.asm.o build/idt/idt.o build/memory/memory.o build/io/io.asm.o  build/memory/heap/heap.o build/memory/heap/kernel_heap.o build/memory/paging/paging.o build/memory/paging/paging.asm.o build/disk/disk.o
+MODULES = build/kernel.asm.o build/kernel.o build/print.o build/idt/idt.asm.o build/idt/idt.o build/memory/memory.o build/io/io.asm.o  build/memory/heap/heap.o build/memory/heap/kernel_heap.o build/memory/paging/paging.o build/memory/paging/paging.asm.o build/disk/disk.o build/string/string.o
 INCLUDES = ./src
 FLAGS = -g -ffreestanding -falign-jumps -falign-functions -falign-labels -falign-loops -fstrength-reduce -fomit-frame-pointer -finline-functions -Wno-unused-function -fno-builtin -Werror -Wno-unused-label -Wno-cpp -Wno-unused-parameter -nostdlib -nostartfiles -nodefaultlibs -Wall -O0 -Iinc
 
@@ -70,6 +70,9 @@ build/memory/paging/paging.asm.o:  src/memory/paging/paging.asm
 
 build/disk/disk.o: src/disk/disk.c
 	i686-elf-gcc -I $(INCLUDES) src/disk $(FLAGS) -c $^ -o $@
+
+build/string/string.o: src/string/string.c
+	i686-elf-gcc -I $(INCLUDES) src/string $(FLAGS) -c $^ -o $@
 
 run:
 	qemu-system-i386 -drive file=bin/disk.img,index=0,media=disk,format=raw
