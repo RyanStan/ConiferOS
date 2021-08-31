@@ -11,5 +11,16 @@
  */
 void *memset(void *s, int c, size_t n);
 
+/*
+ * memcp - compare memory areas
+ *
+ * compares the first n bytes (each intepreted as unsigned char) of the memory areas s1 and s2
+ * 
+ * if return value < 0 then it indicates s1 is less than s2
+ * if return value > 0 then it indicates s2 is less than s1
+ * if return value == 0 then it indicates s1 is equal to s2
+ */
+int memcmp(void *s1, void *s2, size_t n);
+
 #endif /* MEMORY_H */
 
