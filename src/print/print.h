@@ -12,8 +12,6 @@ void terminal_write_char(char c, char color);
 
 void terminal_initialize();
 
-size_t strlen(const char* str);
-
 void print(const char* str);
 
 #endif /* PRINT_H_ */

@@ -5,6 +5,7 @@
 #include "memory/heap/kernel_heap.h"
 #include "memory/paging/paging.h"
 #include "disk/disk.h"
+#include "fs/pparser.h"
 
 void kernel_main()
 {
@@ -21,6 +22,11 @@ void kernel_main()
 	enable_paging();
 
 	enable_interrupts();
+
+	/* Test path parsing */
+	struct path_root *root_path = pparser_parse("0:/bin/shell.bin", NULL);
+	if (root_path)
+		print("Parse path worked\n");
 
 	print("Welcome to ConiferOS");
 

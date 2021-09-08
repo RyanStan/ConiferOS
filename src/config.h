@@ -12,4 +12,6 @@
 #define KERNEL_HEAP_ADDRESS	0x01000000	
 #define KERNEL_HEAP_TABLE_ADDR	0x00007E00	/* Ok to use as long as it's < 480.5 KiB */
 
+#define MAX_FILE_PATH_CHARS     128
+
 #endif

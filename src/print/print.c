@@ -1,4 +1,5 @@
 #include "print.h"
+#include "string/string.h"
 
 /* The QEMU PC emulator simulates a Cirrus CLGD 5446 PCI VGA card */
 #define VGA_WIDTH 80
@@ -54,18 +55,6 @@ void terminal_initialize()
 			terminal_put_char(row, col, ' ', 0);
 		}
 	}
-}
-
-
-size_t strlen(const char* str)
-{
-	size_t len = 0;
-
-	while (str[len] != 0) {
-		len++;
-	}
-
-	return len;
 }
 
 void print(const char* str)
