@@ -31,7 +31,7 @@ struct disk *disk_get(int index);
  * 
  * idisk - the disk to read from
  * lba - the logical block address to start the read at
- * lba - the total number of sectors to read
+ * total - the total number of sectors to read
  * buf - output buffer to store read data
  * 
  */
