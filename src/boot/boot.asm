@@ -1,17 +1,38 @@
 ; Intel syntax
 ; I know, there are a lot of comments.  I'm a newbie to Intel syntax and x86 assembly 
 
-ORG 0x7c00			; This is where the program expects to be loaded into memory
-BITS 16				; Tells the assembler we are using a 16 bit architecture
+ORG 0x7c00				; This is where the program expects to be loaded into memory
+BITS 16					; Tells the assembler we are using a 16 bit architecture
 
 CODE_SEG equ gdt_code - gdt_start	; EQU is a NASM psuedo instruction that gives a symbol (CODE_SEG) a corresponding value (gdt_code - gdt_start)
 DATA_SEG equ gdt_data - gdt_start	; These symbols will be used to give us our offsets into the GDT for the respective segment descriptors
 
-_start:				; the following instructions signify the start of the boot record (look at wiki.osdev.org/FAT)
-	jmp short start
-	nop
+		
+jmp short start				; Start of FAT boot sector
+nop
 
-times 33 db 0			; creates 33 bytes after previous nop instruction to fill our boot record with arbitrary values
+; FAT16 Header
+OEMIdentifier:		db 'CONIFER '
+BytesPerSector:		dw 0x0200	; Generally ignored by most kernels
+SectorsPerCluster:	db 0x80		; decimal 128
+ReservedSectors:	dw 0x00C8	; Our kernel will be stored in the reserved sectors (decimal 200)
+FATCopies:		db 0x02		; Number of file allocation tables on the file system
+RootDirEntries:		dw 0x0040	; Root directory must occupy entire sectors (decimal 64)
+NumSectors:		dw 0x0000	; Not using this
+MediaType:		db 0xF8		; Fixed disk media type
+SectorsPerFAT:		dw 0x0100	; # of sectors per file allocation table (decimal 256)
+SectorsPerTrack:	dw 0x0020	; cylinder-head-sector (chs) addressing
+NumberOfHeads:		dw 0x0040	; # of heads on the storage media (chs)
+HiddenSectors:		dd 0x00000000	; Number of hidden sectors preceding this partition. (i.e. the LBA of the beginning of the partition.)
+SectorsBig:		dd 0x00773594	; Large sector count. This field is set if there are more than 65535 sectors in the volume, resulting in a value which does not fit in the Sectors Per Cluster field
+
+; Extended BPB (DOS 4.0)
+DriveNumber:		db 0x80
+WinNTBit:		db 0x00
+Signature:		db 0x29
+VolumeID:		dd 0xD105	
+VolumeIDString:		db 'CONIFEROS  '
+SystemIDString:		db 'FAT16   '
 
 start:
 	jmp 0x0:step2		; sets the code segment register to 0x0.  This will actually be address 0x7c00 since we set ORG 0x7c00
@@ -87,7 +108,7 @@ print_char:
 
 
 message:
-	db 'StinkOS is booting...', 0
+	db 'ConiferOS is booting...', 0
 
 [BITS 32]
 load32:

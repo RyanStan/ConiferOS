@@ -25,11 +25,16 @@ all: bin/disk.img
 
 bin/disk.img: bin/os.bin
 	cp bin/os.bin bin/disk.img
+#	Mount and unmount the the disk image as a file system
+#	This will allow us to copy over files onto the disk image
+	sudo mount -t vfat bin/disk.img /mnt/d
+	sudo cp ./hello.txt /mnt/d
+	sudo umount /mnt/d
 
 bin/os.bin: bin/boot.bin bin/kernel.bin
 	dd if=bin/boot.bin > bin/os.bin
 	dd if=bin/kernel.bin >> bin/os.bin
-	dd if=/dev/zero bs=512 count=100 >> bin/os.bin # Fills up rest of disk with 100 sector sized blocks of zeros (we'll be loading our kernel in eventually over these null sectors)
+	dd if=/dev/zero bs=1048576 count=16 >> bin/os.bin # Fills up rest of disk with 16, 1 MB sized blocks of zeros (this will be used by Linux to store our file data)
 
 bin/kernel.bin: $(MODULES)
 	i686-elf-ld -g -relocatable $(MODULES) -o build/kernelfull.o
