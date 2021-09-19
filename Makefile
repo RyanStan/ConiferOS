@@ -28,6 +28,7 @@ bin/disk.img: bin/os.bin
 #	Mount and unmount the the disk image as a file system
 #	This will allow us to copy over files onto the disk image
 	sudo mount -t vfat bin/disk.img /mnt/d
+	echo "Hello World" > ./hello.txt
 	sudo cp ./hello.txt /mnt/d
 	sudo umount /mnt/d
 
@@ -98,6 +99,7 @@ clean:
 	rm -rf build/kernelfull.o
 	rm -rf ${MODULES}
 	rm -rf bin/disk.img
+	rm ./hello.txt
 	
 
 
