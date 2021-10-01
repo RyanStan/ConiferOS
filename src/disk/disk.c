@@ -56,6 +56,7 @@ void disk_search_and_init()
         memset(&disk, 0, sizeof(struct disk));
         disk.type = REAL;
         disk.sector_size = DISK_SECTOR_SIZE;
+        disk.filesystem = fs_resolve(&disk);            // TODO: should the fs_resolve function indirectly set the disk's filesystem through its call of resolve instead?
 }
 
 /* For now, since we only have one disk, the implementation is very basic */

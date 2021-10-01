@@ -1,6 +1,8 @@
 #ifndef DISK_H
 #define DISK_H
 
+#include "fs/file.h"
+
 #define DISK_SECTOR_SIZE        512
 
 enum disk_type {
@@ -9,7 +11,11 @@ enum disk_type {
 
 struct disk {
         enum disk_type type;
+        
         int sector_size;
+
+        /* This is the filesystem that is bound to the disk */
+        struct filesystem *filesystem;
 };
 
 

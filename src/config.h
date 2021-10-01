@@ -14,4 +14,7 @@
 
 #define MAX_FILE_PATH_CHARS     128
 
+#define MAX_FILESYSTEMS         12              /* The max # of filesystems drivers which can be loaded into the kernel (only at compile time for now)*/
+#define MAX_OPEN_FILES          512             /* Max # of open file descriptors at once */
+
 #endif

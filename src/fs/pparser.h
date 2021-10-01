@@ -1,8 +1,6 @@
 #ifndef PPARSER_H
 #define PPARSER_H
 
-#endif
-
 struct path_root {
         int drive_no;
         struct path_part *first;
@@ -21,3 +19,5 @@ struct path_root *pparser_parse(const char *path, const char *current_dir_path);
 
 /* Frees the memory of all linked path structs associated with root */
 void pparser_free(struct path_root *root);
+
+#endif
