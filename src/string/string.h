@@ -18,5 +18,13 @@ int ctoi(char c);
 /* Returns true if the character c is a digit between '0' and '9' */
 bool is_digit(char c);
 
+/* Copies the string pointed to by src, 
+ * including the terminating null byte ('\0'), to the 
+ * buffer pointed to by dest.  
+ * The strings may not overlap, and the destination string dest 
+ * must be large enough to receive the copy.
+ */
+char *strcpy(char *dest, const char *src);
+
 
 #endif
