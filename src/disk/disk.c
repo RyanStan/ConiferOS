@@ -50,7 +50,6 @@ int disk_read_sector(int lba, int total, void *buf)
         return 0;
 }
 
-/* Doesn't do actual search yet.  Just here for the future when we have more disks than the physical hard drive */
 void disk_search_and_init()  
 {
         memset(&disk, 0, sizeof(struct disk));

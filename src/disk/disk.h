@@ -20,7 +20,8 @@ struct disk {
 
 
 /* disk_search_and_init
- * Searches for disks and initializes them 
+ * Searches for disks and initializes them.
+ * Must be called after filesystems are initialized (fs_init())
  */
 void disk_search_and_init();
 

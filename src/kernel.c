@@ -7,6 +7,8 @@
 #include "disk/disk.h"
 #include "disk/disk_stream.h"
 #include "fs/pparser.h"
+#include "fs/file.h"
+#include "string/string.h"
 
 /* TODO: Create a test file that tests different functionality like paging, the heaps, my file parser, etc... */
 
@@ -30,6 +32,9 @@ void run_tests()
 	unsigned char c_buf[4];
 	rc = disk_stream_seek(disk_stream, 511);
 	disk_stream_read(disk_stream, c_buf, 4);
+
+	char buf[20];
+	strcpy(buf, "hello!");
 }
 
 void kernel_main()
@@ -37,6 +42,8 @@ void kernel_main()
 	terminal_initialize();
 
 	kernel_heap_init();
+
+	fs_init();
 
 	disk_search_and_init();
 

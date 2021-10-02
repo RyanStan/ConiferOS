@@ -4,6 +4,7 @@
 #include "memory/memory.h"
 #include "memory/heap/kernel_heap.h"
 #include "status.h"
+#include "fs/fat/fat16.h"
 
 /* TODO: should adjust functions to fit linux kernel return value style guidelines.
  * Imperative command functions should return 0 on success or < 0 on failure.
@@ -52,7 +53,7 @@ void fs_insert_filesystem(struct filesystem *filesystem)
 static void fs_static_load()
 {
         memset(filesystems, 0, sizeof(filesystems));
-        // fs_insert_filesystem(fat16_init());  TODO: fat16_init()
+        fs_insert_filesystem(fat16_init());
 }
 
 void fs_init()
