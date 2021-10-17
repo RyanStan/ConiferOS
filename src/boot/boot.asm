@@ -17,7 +17,7 @@ BytesPerSector:		dw 0x0200	; Generally ignored by most kernels
 SectorsPerCluster:	db 0x80		; decimal 128
 ReservedSectors:	dw 0x00C8	; Our kernel will be stored in the reserved sectors (decimal 200)
 FATCopies:		db 0x02		; Number of file allocation tables on the file system
-RootDirEntries:		dw 0x0040	; Root directory must occupy entire sectors (decimal 64)
+RootDirEntries:		dw 0x0040	; Root directory must occupy entire sectors (decimal 64).  This value contain the number of possible (max) entries in the root directory. Its recommended that the number of entries is an even multiple of the BytesPerSector values. The recommended value for FAT16 volumes is 512 entries (compatibility reasons).
 NumSectors:		dw 0x0000	; Not using this
 MediaType:		db 0xF8		; Fixed disk media type
 SectorsPerFAT:		dw 0x0100	; # of sectors per file allocation table (decimal 256)

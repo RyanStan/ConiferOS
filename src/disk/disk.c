@@ -24,8 +24,9 @@ int disk_read_sector(int lba, int total, void *buf)
 {
         outb(0x1F6, (lba >> 24) | 0xE0);                        // Select the master drive                       
         outb(0x1F2, total);                                     // Set sectorcount
-        outb(0x1F3, (unsigned char)(lba & 0xFF));               // Set LBAlo
-        outb(0x1F5, (unsigned char)(lba >> 16));                // Set LBAhi
+        outb(0x1F3, (unsigned char)(lba & 0xFF));               // Set LBAlo (bits 0-7 of LBA)
+        outb(0x1F4, (unsigned char)(lba >> 8));                 // Set LBAmid (bits 8-15 of LBA)
+        outb(0x1F5, (unsigned char)(lba >> 16));                // Set LBAhi (bits 16 - 23 of LBA)
         outb(ATA_COMMAND_IO_PORT, ATA_READ_SECTORS);            // 0x20 is read sector(s) command
         
         /* Read two bytes at a time */
@@ -50,12 +51,16 @@ int disk_read_sector(int lba, int total, void *buf)
         return 0;
 }
 
+/* Once our implementation can take more than one disk, 
+ * this function will have to be built out
+ */
 void disk_search_and_init()  
 {
         memset(&disk, 0, sizeof(struct disk));
         disk.type = REAL;
         disk.sector_size = DISK_SECTOR_SIZE;
-        disk.filesystem = fs_resolve(&disk);            // TODO: should the fs_resolve function indirectly set the disk's filesystem through its call of resolve instead?
+        disk.id = 0;
+        disk.filesystem = fs_resolve(&disk);
 }
 
 /* For now, since we only have one disk, the implementation is very basic */

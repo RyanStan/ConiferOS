@@ -6,16 +6,15 @@
 #define DISK_SECTOR_SIZE        512
 
 enum disk_type {
-        REAL,                   // represents real physical hard drive
+        REAL,                           // represents real physical hard drive
 };
 
 struct disk {
         enum disk_type type;
-        
+        int id;
         int sector_size;
-
-        /* This is the filesystem that is bound to the disk */
-        struct filesystem *filesystem;
+        struct filesystem *filesystem;  // This is the filesystem that is bound to the disk
+        void *fs_private;               // The private data of the filesystem that is bound to this disk
 };
 
 
@@ -37,7 +36,7 @@ struct disk *disk_get(int index);
  * disk_read_block
  * 
  * idisk - the disk to read from
- * lba - the logical block address to start the read at
+ * lba - the logical block address (disk sector) to start the read at 
  * total - the total number of sectors to read
  * buf - output buffer to store read data
  * 

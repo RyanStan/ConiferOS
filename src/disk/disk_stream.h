@@ -11,7 +11,7 @@
 #include "disk.h"
 
 struct disk_stream {
-        int pos;                // the position we're at in the stream (seeking at in the disk)
+        int pos;                // The position we're at in the stream (seeking at in the disk).  The disk is linearly byte addresseable via pos
         struct disk *disk;
 };
 
@@ -31,11 +31,13 @@ int disk_stream_seek(struct disk_stream *disk_stream, int pos);
  * out          - the read bytes are written to this buffer
  * total        - the number of bytes to read
  * 
+ * side effect: increments the disk stream's pos by the number of bytes read (total)
+ * 
  * returns 0 on success or < 0 on failure
  */
 int disk_stream_read(struct disk_stream *disk_stream, void *out, int total);
 
 /* Free the memory associated with disk_stream */
-void disk_stream_close (struct disk_stream *disk_stream);
+void disk_stream_close(struct disk_stream *disk_stream);
 
 #endif
