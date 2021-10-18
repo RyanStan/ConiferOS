@@ -4,11 +4,21 @@
 #include <stdbool.h>
 #include <stddef.h>
 
+/* If c1 is an upper-case letter, this returns the corresponding
+ * lower-case letter.  Otherwise, just returns the same char that was passed in.
+ */
+char tolower(char c1);
+
 /* Returns the length of the null terminated string at ptr */
 int strlen(const char *ptr);
 
 /* Returns the size of the string pointed to by s, excluding the null byte, but at most maxlen */
 int strnlen(const char *s, size_t maxlen);
+
+/* Returns the size of the string pointed to by s, which must be at most maxlen length.  The string
+ * must be terminated with either the null byte, or the terminator byte.  Either byte is excluded from the size.
+ */
+int strnlen_terminator(const char *s, size_t maxlen, char terminator);
 
 /* Converts the character argument c to an integer 
  * Expects c to be a character from 0-9.  Returns -1 if not true
@@ -26,5 +36,16 @@ bool is_digit(char c);
  */
 char *strcpy(char *dest, const char *src);
 
+/* Compares the first n bytes of two strings, s1 and s2.  Returns an integer 
+ * less than, equal to, or greater than 0, if s1 is found, respectively, 
+ * to be less than, to match, or be greater than s2
+ */
+int strncmp(const char *s1, const char *s2, size_t n);
+
+/* Ignoring case, compares the first n bytes of two strings, s1 and s2.  Returns an integer 
+ * less than, equal to, or greater than 0, if s1 is found, respectively, 
+ * to be less than, to match, or be greater than s2
+ */
+int strnicmp(const char *s1, const char *s2, size_t n);
 
 #endif

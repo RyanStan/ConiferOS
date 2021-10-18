@@ -1,5 +1,13 @@
 #include "string.h"
 
+char tolower(char c1)
+{
+        if (c1 >= 65 && c1 <= 90)
+                c1 += 32;
+
+        return c1;
+}
+
 int strlen(const char *ptr)
 {
         int i = 0;
@@ -20,6 +28,18 @@ int strnlen(const char *s, size_t maxlen)
         }
 
         return i;
+}
+
+
+int strnlen_terminator(const char *s, size_t maxlen, char terminator)
+{
+     int i = 0;
+     for (i = 0; i < maxlen; i++) {
+             if (s[i] == '\0' || s[i] == terminator)
+                break;
+     }
+
+     return i;
 }
 
 int ctoi(char c) 
@@ -46,3 +66,44 @@ char *strcpy(char *dest, const char *src)
         *tmp = 0;
         return dest;
 }
+
+int strncmp(const char *s1, const char *s2, size_t n)
+{
+        unsigned char u1, u2;
+
+        while (n-- > 0) {
+                u1 = (unsigned char)*s1;
+                u2 = (unsigned char)*s2;
+                if (u1 != u2)
+                        return u1 - u2;
+                if (u1 == '\0')
+                        return 0;
+
+                s1++;
+                s2++;
+        }
+
+        return 0;
+}
+
+/* Compare two strings up to a given length, ignoring case */
+int strnicmp(const char *s1, const char *s2, size_t n)
+{
+        unsigned char u1, u2;
+
+        while (n-- > 0) {
+                u1 = (unsigned char)*s1;
+                u2 = (unsigned char)*s2;
+                if (u1 != u2 && tolower(u1) != tolower(u2))
+                        return tolower(u1) - tolower(u2);
+                if (u1 == '\0')
+                        return 0;
+
+                s1++;
+                s2++;
+        }
+
+        return 0;
+}
+
+
