@@ -131,7 +131,7 @@ struct filesystem fat16_fs = {
         .open = fat16_open
 };
 
-struct filesystem *fat16_init()                         // CHECK: where does this get called?
+struct filesystem *fat16_init()
 {
         strcpy(fat16_fs.name, "FAT16");
         return &fat16_fs;

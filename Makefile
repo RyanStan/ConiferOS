@@ -117,7 +117,7 @@ clean:
 	rm -rf build/kernelfull.o
 	rm -rf ${MODULES}
 	rm -rf bin/disk.img
-	rm ./hello.txt
+	rm -rf ./hello.txt
 	
 
 

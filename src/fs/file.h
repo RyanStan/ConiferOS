@@ -82,8 +82,17 @@ void fs_init();
  */
 void fs_insert_filesystem(struct filesystem *filesystem);
 
-/* TODO: add comment */
-int file_open(const char *filename, enum file_mode mode);
+/* Responsible for locating the correct filesystem to open a file on
+ * Calls the open function corresponding with the filesystem that owns the file
+ * 
+ * mode_str - string that specifies the mode the file should be opened in
+ *               'r' = read, 'w' = write, 'a' = append
+ * filename - absolute path to the file
+ * 
+ * Returns the file descriptor index associated with filename (non-negative integer) on success
+ * Returns < 0 on failure
+ */
+int file_open(const char *filename, const char *mode_str);
 
 /* Finds a filesystem that can manage the disk.  Calls that respective filesystem's resolve
  * function on the disk.  

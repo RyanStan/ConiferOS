@@ -5,6 +5,10 @@
 #include "memory/heap/kernel_heap.h"
 #include "status.h"
 #include "fs/fat/fat16.h"
+#include "fs/pparser.h"
+#include "disk/disk.h"
+#include "string/string.h"
+#include "kernel.h"
 
 /* TODO: should adjust functions to fit linux kernel return value style guidelines.
  * Imperative command functions should return 0 on success or < 0 on failure.
@@ -65,10 +69,7 @@ void fs_init()
 /* Searches for an open slot in file_descriptors.  If it finds one, it will
  * allocate a new file descriptor and assign desc_out the address of the pointer to that new file descriptor.
  * Returns 0 on success or -ENOMEM on failure
- *
- * TODO: is there a way to make this comment less wordy?
  */
- 
 static int file_new_descriptor(struct file_descriptor **desc_out)
 {
         for (int i = 0; i < MAX_OPEN_FILES; i++) {
@@ -108,8 +109,59 @@ struct filesystem *fs_resolve(struct disk *disk)
         return fs;
 }
 
-int file_open(const char *filename, enum file_mode mode)
+/* Accepts a string that corresponds to a file mode
+ * Returns the file_mode associated with the string
+ * 'r' = FILE_MODE_READ
+ * 'w' = FILE_MODE_WRITE
+ * 'a' = FILE_MODE_APPEND
+ * If str is something else, then returns FILE_MODE_INVALID
+ */
+enum file_mode file_get_mode_by_string(const char *str)
 {
-        /* Not implemented yet */
-        return -EIO;
+        if (strncmp(str, "r", 1) == 0)
+                return READ;
+        else if (strncmp(str, "w", 1) == 0)
+                return WRITE;
+        else if (strncmp(str, "a", 1) == 0)
+                return APPEND;
+        else 
+                return INVALID;
+}
+
+int file_open(const char *filename, const char *mode_str)
+{
+        struct path_root *path_root = pparser_parse(filename, NULL);
+        if (!path_root)
+                return -EINVARG;
+
+        /* We can't have just a root path.  E.g. '0:/'.  We need something like '0:/bin/shell.bin' */
+        if (!path_root->first)
+                return -EINVARG;
+
+        /* Make sure the disk we are reading from exists */
+        struct disk *disk = disk_get(path_root->drive_no);
+        if (!disk)
+                return -EIO;
+
+        /* Ensure that the disk is formatted to a filesystem that we understand and have a driver implementation for */
+        if (!disk->filesystem)
+                return -EIO;
+
+        enum file_mode file_mode = file_get_mode_by_string(mode_str);
+        if (file_mode == INVALID)
+                return -EINVARG;
+
+        void *file_priv_data = disk->filesystem->open(disk, path_root->first, file_mode);
+        if (IS_ERROR(file_priv_data))
+                return ERROR_I(file_priv_data);
+
+        int rc = 0;
+        struct file_descriptor *file = 0;
+        rc = file_new_descriptor(&file);
+        if (rc < 0)
+                return rc;
+        file->filesystem = disk->filesystem;
+        file->private = file_priv_data;
+        file->disk = disk;
+        return file->index;
 }
