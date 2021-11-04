@@ -12,7 +12,7 @@
 
 /* TODO: Create a test file that tests different functionality like paging, the heaps, my file parser, etc... */
 
-void run_tests()
+void run_smoke_tests()
 {
 	/* Test path parsing */
 	struct path_root *root_path = pparser_parse("0:/bin/shell.bin", NULL);
@@ -35,6 +35,13 @@ void run_tests()
 
 	char buf[20];
 	strcpy(buf, "hello!");
+
+	/* VFS and FAT16 */
+	int fd = file_open("0:/hello.txt", "r");
+	if (fd < 0)
+		print("Error opening file\n");	
+	else
+		print("We opened '0:/hello.txt'\n");
 }
 
 void kernel_main()
@@ -55,7 +62,7 @@ void kernel_main()
 
 	enable_interrupts();
 
-	run_tests();
+	run_smoke_tests();
 
 	print("Welcome to ConiferOS");
 

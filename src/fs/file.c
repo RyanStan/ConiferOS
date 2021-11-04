@@ -153,7 +153,7 @@ int file_open(const char *filename, const char *mode_str)
 
         void *file_priv_data = disk->filesystem->open(disk, path_root->first, file_mode);
         if (IS_ERROR(file_priv_data))
-                return ERROR_I(file_priv_data);
+                return ERROR_I(file_priv_data);         // CHECK: should this be -ERROR_I(file_priv_data)?
 
         int rc = 0;
         struct file_descriptor *file = 0;

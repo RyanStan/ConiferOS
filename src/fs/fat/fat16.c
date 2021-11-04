@@ -4,11 +4,13 @@
 #include "disk/disk_stream.h"
 #include "memory/memory.h"
 #include "memory/heap/kernel_heap.h"
+#include "kernel.h"
+#include "config.h"
 #include <stdint.h>
 
 #define FAT16_SIGNATURE         0x29
-#define FAT16_FAT_ENTRY_SIZE    0x02
-#define FAT16_BAD_SECTOR        0xFF7
+#define FAT16_FAT_ENTRY_SIZE    0x02                    // In bytes
+#define FAT16_BAD_SECTOR        0xFFF7
 #define FAT16_UNUSED            0x00
 
 /* FAT directory entry attribute byte bitmasks */
@@ -72,10 +74,10 @@ struct fat_directory_entry {
         uint16_t creation_time;                         // Bits 15 - 11 = Hours (0-23).  Bits 10 - 5 = Minutes (0-59).  Bits 4 - 0 = Seconds (0-29)
         uint16_t creation_date;                         // Bits 15 - 9 = Years from 1980.  Bits 10 - 5 = Month of year (1-12).  Bits 4 - 0 = Day of month (1-31).
         uint16_t last_access;                           // This 16 bit field contain the date when the entry was last read or written to. In case of writes this field of cause contain the same value as the Last Write Date field. 
-        uint16_t high_16_bits_first_cluster;            // High two bytes of first cluster number
+        uint16_t high_16_bits_first_cluster;            // High two bytes of the starting cluster that contains this entry's data
         uint16_t last_mod_time;                         // This 16 bit field is set to the time when the last write occured. When the entry is create this field and the Creation Time field should contain the same values.
         uint16_t last_mod_date;                         // This 16 bit field is set to the date when the last write occured. When the entry is create this field and the Creation Date field should contain the same values. 
-        uint16_t low_16_bits_first_cluster;             // Low two bytes of first cluster number
+        uint16_t low_16_bits_first_cluster;             // Low two bytes of the starting cluster that contains this entry's data
         uint32_t filesize;                              // This 32-bit field count the total file size in bytes. For this reason the file system driver must not allow more than 4 Gb to be allocated to a file. For other entries than files then file size field should be set to 0.
 } __attribute__((packed));
 
@@ -92,20 +94,22 @@ struct fat_directory {
 /* This structure is meant to make dealing with directory entries simpler.  In the case where the entry we're working with
  * represents a directory, we can just access a fat_directory structure instead of the fat_directory_entry.
  * Similar to fat_directory, this structure does not directly correspond to on-disk data.
+ * 
+ * TODO: don't really like how this struct works.  Seems like we would want access to the raw entry AND the fat_directory instance (if the entry represents a directory)
  */
 struct fat_easy_directory_entry {
         union {
-                struct fat_directory_entry *entry;      // If the entry represents a file, we still want to access the fat_directory_entry structure
-                struct fat_directory *directory;        // If the entry represents a directory, we can utilize our fat_directory structure instead of fat_directory_entry
+                struct fat_directory_entry *entry;              // If the entry represents a file, we still want to access the fat_directory_entry structure
+                struct fat_directory *directory;                // If the entry represents a directory, we can utilize our fat_directory structure instead of fat_directory_entry
         };
 
         enum fat_dir_entry_type type;
 };
 
 /* Represents an open file */
-struct fat_item_descriptor {
-        struct fat_easy_directory_entry *item;          
-        uint32_t pos;                                   // Current stream offset into file
+struct fat_file_descriptor {
+        struct fat_easy_directory_entry *easy_directory_entry;  // The directory entry corresponding to the open file                 
+        uint32_t pos;                                           // Current stream offset into file
 };
 
 /* Private data for internal use by FAT filesystem 
@@ -118,9 +122,9 @@ struct fat_private {
         /* Three separate stream structures but all point to the same disk 
          * that is associated with this fat filesystem.
          */
-        struct disk_stream *cluster_read_stream;                        // Used to stream file data from data clusters
-        struct disk_stream *fat_read_stream;                            // Used to stream the file allocation table (FAT)
-        struct disk_stream *directory_stream;                           // Used to stream directory clusters
+        struct disk_stream *cluster_read_stream;                // Used to stream file data from data clusters
+        struct disk_stream *fat_read_stream;                    // Used to stream the file allocation table (FAT)
+        struct disk_stream *directory_stream;                   // Used to stream directory clusters
 };
 
 int fat16_resolve(struct disk *disk);
@@ -137,12 +141,6 @@ struct filesystem *fat16_init()
         return &fat16_fs;
 }
 
-/* TODO: add comment */
-void *fat16_open(struct disk *disk, struct path_part *path_part, enum file_mode mode)
-{
-        return 0;
-}
-
 /* Initializes the filesystem's internal private data structures */
 static void fat16_init_private(struct disk *disk, struct fat_private *fat_private)
 {
@@ -156,7 +154,7 @@ static void fat16_init_private(struct disk *disk, struct fat_private *fat_privat
  * "Absolute position" refers to the byte offset of sector from the start of the disk
  * Sector is a 0-based index.  I.e. sector 0 starts at byte 0, sector 1 starts at byte 512, etc.
  */
-int fat16_sector_to_absolute_pos(struct disk *disk, int sector)
+static int fat16_sector_to_absolute_pos(struct disk *disk, int sector)
 {
         return sector * disk->sector_size;
 }
@@ -164,7 +162,7 @@ int fat16_sector_to_absolute_pos(struct disk *disk, int sector)
 /* Return the number of directory entries in the directory cluster that starts at directory_start_sector 
  * Returns < 0 if an error occurs
  */
-int fat16_get_total_items_for_directory(struct disk *disk, uint32_t directory_start_sector)
+static int fat16_get_total_items_for_directory(struct disk *disk, uint32_t directory_start_sector)
 {
         int rc = 0;
 
@@ -204,11 +202,11 @@ int fat16_get_total_items_for_directory(struct disk *disk, uint32_t directory_st
         return count;
 }
 
-/* TODO: add function comment.
+/* 
  * Load the root directory into the fat_directory structure out_root_dir
  * Returns 0 on success or < 0 on failure
  */
-int fat16_get_root_directory(struct disk *disk, struct fat_private *fat_private, struct fat_directory *out_root_dir)
+static int fat16_get_root_directory(struct disk *disk, struct fat_private *fat_private, struct fat_directory *out_root_dir)
 {
         int rc;
 
@@ -246,7 +244,6 @@ int fat16_get_root_directory(struct disk *disk, struct fat_private *fat_private,
 /* fat16_resolve
 *
 * Reads boot sector of disk and returns 0 if disk is formatted to FAT16 or < 0 otherwise
-* TODO: describe possible error return codes here
 */
 int fat16_resolve(struct disk *disk)
 {
@@ -288,5 +285,340 @@ out:
         return rc;
 }
 
+/*
+ * Filenames in FAT16 must be trailing padded with space bytes (ASCII: 0x20).  This function accepts a 
+ * string at in and returns a new string at out that has null chars in the place of spaces
+ * 
+ * Returns 0 on success or < 0 on failure
+ * 
+ * Side effect: increments the char pointer that out points to
+ * TODO: seems like this function would be more versatile if it didn't have the above side effect.  Would have to rework how it's used in get filename if this was the case
+ */
+static int fat16_convert_spaces_to_null(char **out, const char *in)
+{
+        // CHECK: he uses a pointer to a pointer for out.  Do I need to do that as well?
+        while (*in != 0x00 && *in != 0x20) {
+                **out = *in;
+                *out += 1;
+                in += 1;
+        }
 
+        if (*in == 0x20)
+                **out = 0x00;
+
+        return 0;
+}
+
+/* Writes the filename associated with raw_entry to the buffer at out.  
+ * At max will write maxlen chars (bytes) to out.
+ * Returns 0 on success or < 0 on failure
+ */
+static int fat16_get_filename(struct fat_directory_entry *raw_entry, char *out, int maxlen)
+{
+        memset(out, 0x00, maxlen);
+        fat16_convert_spaces_to_null(&out, (const char *)raw_entry->filename);
+
+        /* Check to see if the file has an extension */
+        if (raw_entry->ext[0] != 0x00 && raw_entry->ext[0] != 0x20) {
+                *out = '.';
+                out++;
+                fat16_convert_spaces_to_null(&out, (const char *)raw_entry->ext);
+        }
+
+        return 0;
+}
+
+/* Returns a new fat_directory_entry which is created by copying n bytes from raw_entry.  
+ * n must be larger than sizeof(struct fat_directory_entry)
+ * TODO: why include n?? can't we just assume n =  sizeof(struct fat_directory_entry)??
+ */
+static struct fat_directory_entry *fat16_clone_raw_dir_entry(struct fat_directory_entry *raw_entry, size_t n)
+{
+        if (n < sizeof(struct fat_directory_entry))
+                return 0;
+
+        struct fat_directory_entry *entry_copy = kzalloc(n);
+        if (!entry_copy)
+                return 0;
+
+        memcpy(entry_copy, raw_entry, n);
+        
+        return entry_copy;
+}
+
+/* Returns the index # (CHS indexing starts at 1) of the sector that corresponds with the start of cluster */
+static int fat16_cluster_to_start_sector(struct fat_private *fat_private, int cluster)
+{
+        /* To understand this function, remember that the data region starts after the root directory and
+         * is composed of cluster, each of which are made of multiple sectors.
+         * The first two FAT entries (which theoretically correspond to clusters 0 and 1) store special data, which is why we multiply (cluster - 2) with the sectors per cluster.  Thus, the data region
+         * starts at cluster 2.  
+         */
+        return fat_private->root_directory.end_sector + (cluster - 2) * fat_private->header.fat_header_primary.sectors_per_cluster;
+}
+
+/* Returns the index of the initial cluster that contains raw_entry's data 
+ * If raw_entry represents a directory, then the first cluster will contain directory entries (directory cluster).
+ * If raw_entry represents a file, then the first cluster will contain file data (data cluster).
+ */
+static uint32_t fat16_get_first_cluster(struct fat_directory_entry *raw_entry)
+{
+        return raw_entry->low_16_bits_first_cluster | raw_entry->high_16_bits_first_cluster;
+}
+
+/* Returns the sector that the first FAT (file allocation table) starts at */
+static uint32_t fat16_get_first_fat_sector(struct fat_private *fat_private)
+{
+        /* The first FAT comes directly after the reserved region (which contains our boot and kernel code) */
+        return fat_private->header.fat_header_primary.reserved_sectors;
+}
+
+/* Returns the file allocation table (fat) entry that corresponds with cluster 
+ * Returns < 0 on error
+ */
+static uint16_t fat16_get_fat_entry(struct disk *disk, int cluster)
+{
+        /* Each fat entry is 16 bits, or two bytes */
+        int rc = 0;
+        struct fat_private *fat_private = disk->fs_private;
+        struct disk_stream *fat_read_stream = fat_private->fat_read_stream;
+
+        uint32_t fat_table_position_bytes = fat16_get_first_fat_sector(fat_private) * disk->sector_size;
+        if ((rc = disk_stream_seek(fat_read_stream, fat_table_position_bytes + cluster * FAT16_FAT_ENTRY_SIZE)) < 0)
+                return rc;
+
+        uint16_t entry = 0;
+        entry = disk_stream_read(fat_read_stream, &entry, FAT16_FAT_ENTRY_SIZE);
+
+        return entry;
+}
+
+/* Returns the cluster in the chain that is offset bytes from the beginning of the cluster chain_start_cluster */
+static int fat16_get_cluster_in_chain(struct disk *disk, int chain_start_cluster, int offset)
+{
+        struct fat_private *fat_private = disk->fs_private;
+        int cluster = chain_start_cluster;
+        int cluster_size_bytes = fat_private->header.fat_header_primary.sectors_per_cluster * disk->sector_size;
+        int clusters_ahead = offset / cluster_size_bytes;
+        for (int i = 0; i < clusters_ahead; i++) {
+                int entry = fat16_get_fat_entry(disk, cluster);
+                if (entry >= 0xFFF8 && entry <= 0xFFFF) {
+                        /* 0xFFF8 - 0xFFFF represent End-of-file 
+                         * If we've entered this if statement, then it means that the offset provided is out of bounds with regards to the cluster chain at chain_start_cluster
+                         */
+                        return -EIO;
+                }
+
+                if (entry == FAT16_BAD_SECTOR)
+                        return -EIO;
+                
+                /* Reserved entry (first and second fat entries are reserved to hold special data) */
+                if (entry >= 0xFFF0 && entry <= 0xFFF6)
+                        return -EIO;
+
+                /* If the entry is 0, then there is not an associated cluster */
+                if (entry == 0x0000)
+                        return -EIO;
+
+                cluster = (int)entry;
+        }
+        return cluster;
+}
+
+/* Reads n bytes from the cluster chain beginning at chain_start_cluster.
+ * Starts at offset bytes from chain_start_cluster.  If offset is large enough, this may mean that the read will start in a cluster further along the chain than chain_start_cluster.
+ * Stores the read data at out.
+ * Returns 0 on success or < 0 on failure
+ */
+static int fat16_read_internal(struct disk *disk, int chain_start_cluster, int offset, int n, void *out)
+{
+        struct fat_private *fat_private = disk->fs_private;
+        struct disk_stream *cluster_read_stream = fat_private->cluster_read_stream;
+        int cluster_size_bytes = fat_private->header.fat_header_primary.sectors_per_cluster * disk->sector_size;
+        int start_cluster = fat16_get_cluster_in_chain(disk, chain_start_cluster, offset);
+        if (start_cluster < 0)
+                return start_cluster;
+
+        int offset_from_cluster = offset % cluster_size_bytes;
+        int start_sector = fat16_cluster_to_start_sector(fat_private, start_cluster);
+        int start_pos_bytes = start_sector * disk->sector_size + offset_from_cluster;
+        /* We can only read up to the end of a cluster.  Then we have to find the next cluster in the chain
+         *
+         * TODO: This has the same error that Daniel made elsewhere in the stream code.  If offset is partially into the cluster already,
+         * then n does not necessarily have to be larger than cluster_size_bytes for the read to overrun into the next cluster.
+         * This code incorrectly assumes that we're starting a read from the beginning of a cluster.
+         */
+        int bytes_to_read = n > cluster_size_bytes ? cluster_size_bytes : n;
+
+        int rc = 0;
+        if ((rc = disk_stream_seek(cluster_read_stream, start_pos_bytes)) < 0)
+                return rc;
+        if ((rc = disk_stream_read(cluster_read_stream, out, bytes_to_read)) < 0)
+                return rc;
+        
+        n -= bytes_to_read;
+        if (n > 0) {
+                /* There is still more to read 
+                 * TODO: this could be bad for stack space.
+                 */
+                rc = fat16_read_internal(disk, chain_start_cluster, offset + bytes_to_read, n, out + bytes_to_read);
+                if (rc < 0)
+                        return rc;
+        }
+
+        return rc;
+}
+
+/* Frees the allocated memory associated with directory */
+static void fat16_free_directory(struct fat_directory *directory)
+{
+        if (!directory)
+                return;
+
+        if (directory->entry)
+                kfree(directory->entry);
+
+        kfree(directory);
+}
+
+/* Free the allocated memory associated with easy_dir_entry */
+static void fat16_easy_dir_entry_free(struct fat_easy_directory_entry *easy_dir_entry)
+{
+        if (easy_dir_entry->type == FAT_ITEM_TYPE_DIRECTORY) {
+                fat16_free_directory(easy_dir_entry->directory);
+        } else if (easy_dir_entry->type == FAT_ITEM_TYPE_FILE) {
+                kfree(easy_dir_entry->entry);
+        } else {
+                // panic() --> have to implement this
+        }
+
+        kfree(easy_dir_entry);
+}
+
+/* Creates and initializes a fat_directory instance which corresponds to the directory represented by raw_entry 
+ * Returns 0 (NULL) on error.
+ */
+static struct fat_directory *fat16_load_fat_directory(struct disk *disk, struct fat_directory_entry *raw_entry)
+{
+        struct fat_directory *directory = 0;
+        struct fat_private *fat_private = disk->fs_private;
+        if (!(raw_entry->attribute & FAT_FILE_SUBDIRECTORY))
+                return NULL;
+
+        directory = kzalloc(sizeof (struct fat_directory));
+        if (!directory)
+                return NULL;
+
+        int cluster = fat16_get_first_cluster(raw_entry);
+        int cluster_sector = fat16_cluster_to_start_sector(fat_private, cluster);
+        directory->total = fat16_get_total_items_for_directory(disk, cluster_sector);
+        int directory_size = directory->total * sizeof(struct fat_directory_entry);
+        directory->entry = kzalloc(directory_size);
+        if (!directory->entry) {
+                kfree(directory);
+                return NULL;
+        }
+
+        int rc = fat16_read_internal(disk, cluster, 0x00, directory_size, directory->entry);
+        if (rc < 0) {
+                fat16_free_directory(directory);
+                return NULL;
+        }
+
+        return directory;
+}
+
+/* Creates and returns a fat_easy_directory_entry instance corresponding with the fat_directory_entry raw_entry 
+ * Returns 0 on failure
+*/
+static struct fat_easy_directory_entry *fat16_get_easy_entry(struct disk *disk, struct fat_directory_entry *raw_entry)
+{
+        struct fat_easy_directory_entry *easy_entry = kzalloc(sizeof(struct fat_easy_directory_entry));
+        if (!easy_entry)
+                return 0;
+
+        if (raw_entry->attribute & FAT_FILE_SUBDIRECTORY) {
+                easy_entry->directory = fat16_load_fat_directory(disk, raw_entry);
+                easy_entry->type = FAT_ITEM_TYPE_DIRECTORY;
+        } else {
+                easy_entry->type = FAT_ITEM_TYPE_FILE;
+                /* Since raw_entry might be deleted after this function is called, we need to make sure we store a copy of it */
+                easy_entry->entry = fat16_clone_raw_dir_entry(raw_entry, sizeof(struct fat_directory_entry));                                            
+        }
+
+        return easy_entry;
+}
+
+/* Returns the directory entry in directory that is associated with name
+ * Returns 0 if the entry name does not exist in directory
+ */
+static struct fat_easy_directory_entry *fat16_find_entry_in_directory(struct disk *disk, struct fat_directory *directory,  const char *name)
+{
+        struct fat_easy_directory_entry *entry = 0;
+        char tmp_filename[MAX_FILE_PATH_CHARS];
+
+        for (int i = 0; i < directory->total; i++) {
+                fat16_get_filename(&directory->entry[i], tmp_filename, sizeof(tmp_filename));
+                if (strnicmp(tmp_filename, name, sizeof(tmp_filename)) == 0) {
+                       entry = fat16_get_easy_entry(disk, &directory->entry[i]);
+                }
+        }
+        
+        return entry;
+}
+
+/* Returns the directory entry at the given path on disk.  Returns NULL (0) on error */
+static struct fat_easy_directory_entry *fat16_get_directory_entry(struct disk *disk, struct path_part *path)
+{
+        struct fat_private *fat_private = disk->fs_private;
+        struct fat_easy_directory_entry *first_part_entry = fat16_find_entry_in_directory(disk, &fat_private->root_directory, path->part);
+                                                                                                                                        
+        if (!first_part_entry)
+                return 0;
+
+        struct fat_easy_directory_entry *curr_part_entry = first_part_entry;
+        struct path_part *next_path_part = path->next;
+        while (next_path_part) {
+                if (curr_part_entry->type != FAT_ITEM_TYPE_DIRECTORY) {
+                        /* This indicates the path is invalid.  Since next_path_part has a value,
+                         * the type of this entry must be a directory
+                         */
+                        return NULL;
+                }
+
+                struct fat_easy_directory_entry *tmp_entry = fat16_find_entry_in_directory(disk, curr_part_entry->directory, next_path_part->part);
+                /* Since fat16_find_entry_in_directory dynamically creates the fat16 structures in memory on the fly, we should release 
+                 * the corresponding memory as we continue to traverse the path.
+                 */
+                fat16_easy_dir_entry_free(curr_part_entry);
+                curr_part_entry = tmp_entry;
+                next_path_part = next_path_part->next;
+        }
+
+        return curr_part_entry;
+}
+
+/* Creates a file descriptor corresponding to the file at path on disk 
+ * Right now this filesystem implementation only supports file reads, so the only
+ * allowed mode is READ.
+ * Returns an initialized fat_file_descriptor instance on success, or < 0 on failure
+ */
+void *fat16_open(struct disk *disk, struct path_part *path, enum file_mode mode)
+{
+        /* We are only implementing reads in our filesystem for now */
+        if (mode != READ)
+                return ERROR(-ERDONLY);
+
+        struct fat_file_descriptor *fat_file_descriptor = kzalloc(sizeof(struct fat_file_descriptor));
+        if (!fat_file_descriptor) 
+                return ERROR(-ENOMEM);
+
+        fat_file_descriptor->easy_directory_entry = fat16_get_directory_entry(disk, path);
+        if (!fat_file_descriptor->easy_directory_entry)
+                return ERROR(-EIO);
+
+        fat_file_descriptor->pos = 0;
+
+        return fat_file_descriptor;
+}
 

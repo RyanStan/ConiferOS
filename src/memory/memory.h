@@ -12,7 +12,7 @@
 void *memset(void *s, int c, size_t n);
 
 /*
- * memcp - compare memory areas
+ * memcmp - compare memory areas
  *
  * compares the first n bytes (each intepreted as unsigned char) of the memory areas s1 and s2
  * 
@@ -21,6 +21,15 @@ void *memset(void *s, int c, size_t n);
  * if return value == 0 then it indicates s1 is equal to s2
  */
 int memcmp(void *s1, void *s2, size_t n);
+
+/* memcpy - copy memory area
+ *
+ * Copies n bytes from memory area src to memory area dest.
+ * The memory areas must not overlap.
+ * 
+ * Returns a pointer to dest
+ */
+void *memcpy(void *dest, void *src, size_t n);
 
 #endif /* MEMORY_H */
 
