@@ -11,6 +11,7 @@
 #define FILE_H
 
 #include "fs/pparser.h"
+#include <stdint.h>
 
 #define FS_NAME_MAX     20
 
@@ -35,10 +36,12 @@ struct filesystem {
 
         char name[FS_NAME_MAX];
 
-        /* open - TODO: not sure what this will do... open a file system??
-         * 
+        /* fs_open - stream open function 
+         *
+         * Opens the file whose path is the value contained in list beginning with path_part and associates
+         * a stream with it.  This will return filesystem implementation specific private data.
          */
-        void *(*open)(struct disk *disk, struct path_part *path_part, enum file_mode mode);
+        void *(*fs_open)(struct disk *disk, struct path_part *path_part, enum file_mode mode);
 
         /* resolve
          *
@@ -49,6 +52,14 @@ struct filesystem {
          * FAT filesystem driver, then it will return true if disk is formatted as a FAT filesystem
          */
         int (*resolve)(struct disk *disk); 
+
+        /* fs_read - binary stream input
+         *
+         * Reads nmemb items of data, each size bytes long, 
+         * from the stream associated with private (private is often a file descriptor),    --> TODO: double check that private is probably a file descriptor structure e.g. fat_file_descriptor
+         * storing them at the location given by out
+         */
+        int (*fs_read)(struct disk *disk, void *private, uint32_t size, uint32_t nmemb, char *out);
 };
 
 /* File descriptor that represents an open file */
@@ -72,6 +83,9 @@ struct file_descriptor {
         void *private;
 };
 
+//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+/* Our VFS layer functions */
+
 /* Initializes all file systems.
  * Loads compile time filesystem drivers.
  */
@@ -82,8 +96,8 @@ void fs_init();
  */
 void fs_insert_filesystem(struct filesystem *filesystem);
 
-/* Responsible for locating the correct filesystem to open a file on
- * Calls the open function corresponding with the filesystem that owns the file
+/* Responsible for locating the correct filesystem to open a file with.
+ * Calls the fopen function corresponding with the filesystem that owns the file.
  * 
  * mode_str - string that specifies the mode the file should be opened in
  *               'r' = read, 'w' = write, 'a' = append
@@ -92,7 +106,7 @@ void fs_insert_filesystem(struct filesystem *filesystem);
  * Returns the file descriptor index associated with filename (non-negative integer) on success
  * Returns < 0 on failure
  */
-int file_open(const char *filename, const char *mode_str);
+int fopen(const char *filename, const char *mode_str);
 
 /* Finds a filesystem that can manage the disk.  Calls that respective filesystem's resolve
  * function on the disk.  
@@ -100,6 +114,20 @@ int file_open(const char *filename, const char *mode_str);
  * TODO: the way we're using this right now is odd.  We're calling it within disk_search_and_init to assign the disk's filesystem.
  *       However, it seems like since the filesystem's resolve method is passed the disk, it should just set the disk's filesystem itself
  */
-struct filesystem *fs_resolve(struct disk *disk); 
+struct filesystem *fs_resolve(struct disk *disk);
+
+/* fread - binary stream input - VFS layer
+ * 
+ * Reads nmemb items of data, each size bytes long, 
+ * from the stream associated with private (private is often a file descriptor),
+ * storing them at the location given by out
+ * 
+ * This function calls the fread function of the filesystem implementation that is associated with disk.
+ * 
+ * Returns 0 on success or < 0 on failure
+ */
+//int fread(struct disk *disk, void *private, uint32_t size, uint32_t nmemb, char *out);
+// TODO: comment with why fread uses following parameters and what they mean. ptr will be location of output buffer
+int fread(void *ptr, uint32_t size, uint32_t nmemb, int fd);
 
 #endif

@@ -128,7 +128,7 @@ enum file_mode file_get_mode_by_string(const char *str)
                 return INVALID;
 }
 
-int file_open(const char *filename, const char *mode_str)
+int fopen(const char *filename, const char *mode_str)
 {
         struct path_root *path_root = pparser_parse(filename, NULL);
         if (!path_root)
@@ -151,7 +151,7 @@ int file_open(const char *filename, const char *mode_str)
         if (file_mode == INVALID)
                 return -EINVARG;
 
-        void *file_priv_data = disk->filesystem->open(disk, path_root->first, file_mode);
+        void *file_priv_data = disk->filesystem->fs_open(disk, path_root->first, file_mode);
         if (IS_ERROR(file_priv_data))
                 return ERROR_I(file_priv_data);         // CHECK: should this be -ERROR_I(file_priv_data)?
 
@@ -164,4 +164,17 @@ int file_open(const char *filename, const char *mode_str)
         file->private = file_priv_data;
         file->disk = disk;
         return file->index;
+}
+
+int fread(void *ptr, uint32_t size, uint32_t nmemb, int fd)
+{
+        if (size == 0 || nmemb == 0 || fd < 0)
+                return -EINVARG;
+
+        struct file_descriptor *desc = file_get_descriptor(fd);
+        if (!desc)
+                return -EINVARG;
+
+        int rc = desc->filesystem->fs_read(desc->disk, desc->private, size, nmemb, (char *)ptr);
+        return rc;
 }

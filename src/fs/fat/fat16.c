@@ -132,7 +132,7 @@ void *fat16_open(struct disk *disk, struct path_part *path_part, enum file_mode 
 
 struct filesystem fat16_fs = {
         .resolve = fat16_resolve,
-        .open = fat16_open
+        .fs_open = fat16_fopen
 };
 
 struct filesystem *fat16_init()
@@ -603,7 +603,7 @@ static struct fat_easy_directory_entry *fat16_get_directory_entry(struct disk *d
  * allowed mode is READ.
  * Returns an initialized fat_file_descriptor instance on success, or < 0 on failure
  */
-void *fat16_open(struct disk *disk, struct path_part *path, enum file_mode mode)
+void *fat16_fopen(struct disk *disk, struct path_part *path, enum file_mode mode)
 {
         /* We are only implementing reads in our filesystem for now */
         if (mode != READ)

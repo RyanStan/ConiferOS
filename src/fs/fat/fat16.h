@@ -18,6 +18,6 @@ int fat16_resolve(struct disk *disk);
  * allowed mode is READ.
  * Returns an initialized fat_file_descriptor instance on success, or < 0 on failure
  */
-void *fat16_open(struct disk *disk, struct path_part *path, enum file_mode mode);
+void *fat16_fopen(struct disk *disk, struct path_part *path, enum file_mode mode);
 
 #endif 

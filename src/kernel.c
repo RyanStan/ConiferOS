@@ -37,7 +37,7 @@ void run_smoke_tests()
 	strcpy(buf, "hello!");
 
 	/* VFS and FAT16 */
-	int fd = file_open("0:/hello.txt", "r");
+	int fd = fopen("0:/hello.txt", "r");
 	if (fd < 0)
 		print("Error opening file\n");	
 	else
