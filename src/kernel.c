@@ -46,13 +46,20 @@ void run_smoke_tests()
 		char buf[length];
 		fseek(fd, 5, SEEK_SET);
 		if (fread(buf, 1, length, fd) == 0) {
-			print("ERROR: fread");
+			print("ERROR: fread\n");
 		} else {
 			print("Contents of 0:/hello.txt (starting at 5th byte): ");
 			print(buf);
+			print("\n");
 		}
-
-	}		
+		struct file_stat file_stat;
+		fstat(fd, &file_stat);
+		if (file_stat.filesize == 12) {
+			print("fstat success\n");
+		} else {
+			print("ERROR: fstat\n");
+		}
+	}
 }
 
 void kernel_main()

@@ -29,13 +29,11 @@ enum file_mode {
         INVALID         //??
 };
 
-enum file_stat_flags {
-        /* Bit masks */
-        FILE_STAT_READ_ONLY = 0b00000001        // First bit will be set if file is read only
-};
+/* File stat flags (bitmasks) */
+#define FILE_STAT_READ_ONLY 0b00000001
 
 struct file_stat {
-        enum file_stat_flags flags;
+        unsigned int flags;
         uint32_t filesize;
 };
 
@@ -92,6 +90,13 @@ struct filesystem {
         */
         int (*fs_fseek)(void *private, size_t offset, enum file_seek_mode whence);
 
+        /* fs_fstat - get file status
+         *
+         * Returns information about the file associated with private (fs implementation specific data).
+         * stat will be set by function and will point to returned file_stat instance.
+         * 
+         * Integer return value of 0 on success or < 0 on failure.
+         */
         int (*fs_fstat)(struct disk *disk, void *private, struct file_stat *stat);
 };
 
@@ -179,6 +184,14 @@ size_t fread(void *ptr, size_t size, size_t nmemb, int fd);
  */
 int fseek(int fd, size_t offset, enum file_seek_mode whence);
 
+
+/* fstat - get file status
+ *
+ * Returns information about the file associated with the file descriptor fd.
+ * stat will be set by function and will point to returned file_stat instance.
+ * 
+ * Integer return value of 0 on success or < 0 on failure.
+ */
 int fstat(int fd, struct file_stat *stat);
 
 

@@ -132,12 +132,14 @@ int fat16_resolve(struct disk *disk);
 void *fat16_open(struct disk *disk, struct path_part *path_part, enum file_mode mode);
 size_t fat16_fread(struct disk *disk, void *descriptor, size_t size, size_t nmemb, char *out);
 int fat16_fseek(void *private, size_t offset, enum file_seek_mode whence);
+int fat16_fstat(struct disk *disk, void *private, struct file_stat *stat);
 
 struct filesystem fat16_fs = {
         .resolve = fat16_resolve,
         .fs_open = fat16_fopen,
         .fs_fread = fat16_fread,
-        .fs_fseek = fat16_fseek
+        .fs_fseek = fat16_fseek,
+        .fs_fstat = fat16_fstat
 };
 
 struct filesystem *fat16_init()
@@ -699,5 +701,29 @@ int fat16_fseek(void *private, size_t offset, enum file_seek_mode whence)
                         return -EINVARG;
         }
         
+        return 0;
+}
+
+/* fat16_fstat - get file status
+ *
+ * Returns information about the file associated with private (fs implementation specific data).
+ * stat will be set by function and will point to returned file_stat instance.
+ * 
+ * Integer return value of 0 on success or < 0 on failure.
+ */
+int fat16_fstat(struct disk *disk, void *private, struct file_stat *stat)
+{
+        struct fat_file_descriptor *desc = private;
+        if (desc->easy_directory_entry->type == FAT_ITEM_TYPE_DIRECTORY) {
+                return -EINVARG;
+        }
+
+        struct fat_directory_entry *raw_entry = desc->easy_directory_entry->entry;
+        stat->filesize = raw_entry->filesize;
+        stat->flags = 0x00;
+        if (raw_entry->attribute & FAT_FILE_READ_ONLY) {
+                stat->flags |= FILE_STAT_READ_ONLY;
+        }
+
         return 0;
 }
