@@ -12,6 +12,7 @@
 
 #include "fs/pparser.h"
 #include <stddef.h>
+#include <stdint.h>
 
 #define FS_NAME_MAX     20
 
@@ -26,6 +27,16 @@ enum file_mode {
         WRITE,          //O_WRONLY
         APPEND,         //O_APPEND
         INVALID         //??
+};
+
+enum file_stat_flags {
+        /* Bit masks */
+        FILE_STAT_READ_ONLY = 0b00000001        // First bit will be set if file is read only
+};
+
+struct file_stat {
+        enum file_stat_flags flags;
+        uint32_t filesize;
 };
 
 /* We need to forward declare disk since disk.h includes this file */
@@ -80,6 +91,8 @@ struct filesystem {
         * 
         */
         int (*fs_fseek)(void *private, size_t offset, enum file_seek_mode whence);
+
+        int (*fs_fstat)(struct disk *disk, void *private, struct file_stat *stat);
 };
 
 /* File descriptor that represents an open file */
@@ -165,5 +178,8 @@ size_t fread(void *ptr, size_t size, size_t nmemb, int fd);
  * 
  */
 int fseek(int fd, size_t offset, enum file_seek_mode whence);
+
+int fstat(int fd, struct file_stat *stat);
+
 
 #endif

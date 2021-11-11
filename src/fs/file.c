@@ -187,3 +187,12 @@ int fseek(int fd, size_t offset, enum file_seek_mode whence)
         
         return desc->filesystem->fs_fseek(desc->private, offset, whence);
 }
+
+int fstat(int fd, struct file_stat *stat)
+{
+        struct file_descriptor *desc = file_get_descriptor(fd);
+        if (!desc)
+                return -EINVARG;
+
+        return desc->filesystem->fs_fstat(desc->disk, desc->private, stat);
+}
