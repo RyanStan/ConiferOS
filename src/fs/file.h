@@ -79,7 +79,7 @@ struct filesystem {
         * Returns 0 on success or < 0 on failure.
         * 
         */
-        int (*fs_fseek)(void *private, int offset, enum file_seek_mode whence);
+        int (*fs_fseek)(void *private, size_t offset, enum file_seek_mode whence);
 };
 
 /* File descriptor that represents an open file */
@@ -164,6 +164,6 @@ size_t fread(void *ptr, size_t size, size_t nmemb, int fd);
  * Returns 0 on success or < 0 on failure.
  * 
  */
-int fseek(int fd, int offset, enum file_seek_mode whence);
+int fseek(int fd, size_t offset, enum file_seek_mode whence);
 
 #endif

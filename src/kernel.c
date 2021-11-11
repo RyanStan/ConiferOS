@@ -44,13 +44,14 @@ void run_smoke_tests()
 		print("We opened '0:/hello.txt'\n");
 		int length = strlen("Hello World");
 		char buf[length];
-		if (fread(buf, 1, length, fd) != length) {
+		fseek(fd, 5, SEEK_SET);
+		if (fread(buf, 1, length, fd) == 0) {
 			print("ERROR: fread");
 		} else {
-			print("Contents of 0:/hello.txt: ");
+			print("Contents of 0:/hello.txt (starting at 5th byte): ");
 			print(buf);
-			print("\n");
 		}
+
 	}		
 }
 

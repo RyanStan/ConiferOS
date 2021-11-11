@@ -131,11 +131,13 @@ struct fat_private {
 int fat16_resolve(struct disk *disk);
 void *fat16_open(struct disk *disk, struct path_part *path_part, enum file_mode mode);
 size_t fat16_fread(struct disk *disk, void *descriptor, size_t size, size_t nmemb, char *out);
+int fat16_fseek(void *private, size_t offset, enum file_seek_mode whence);
 
 struct filesystem fat16_fs = {
         .resolve = fat16_resolve,
         .fs_open = fat16_fopen,
-        .fs_fread = fat16_fread
+        .fs_fread = fat16_fread,
+        .fs_fseek = fat16_fseek
 };
 
 struct filesystem *fat16_init()
@@ -657,4 +659,45 @@ size_t fat16_fread(struct disk *disk, void *descriptor, size_t size, size_t nmem
                 offset += size;
         }
         return count;
+}
+
+/* fat16_fseek - reposition the file stream
+ *
+ * Sets the file position indicator for the file associated with private (fs implementation specific data).  
+ * The new position, measured in bytes, 
+ * is obtained by adding offset bytes to the position specified by whence.
+ * If whence is set to SEEK_SET, SEEK_CUR, or SEEK_END, the offset is relative
+ * to the start of the file, the current positoin indicator, or end-of-file, respectively.
+ * 
+ * Returns 0 on success or < 0 on failure.
+ *
+ * SEEK_END isn't implemented yet
+ * 
+ * 
+ */
+int fat16_fseek(void *private, size_t offset, enum file_seek_mode whence)
+{
+        struct fat_file_descriptor *desc = private;
+        if (desc->easy_directory_entry->type == FAT_ITEM_TYPE_DIRECTORY) {
+                return -EINVARG;
+        }
+        struct fat_directory_entry *raw_entry = desc->easy_directory_entry->entry;
+        if (offset >= raw_entry->filesize) {
+                return -EIO;
+        }
+
+        switch (whence) {
+                case SEEK_SET:
+                        desc->pos = offset;
+                        break;
+                case SEEK_CUR:
+                        desc->pos += offset;
+                        break;
+                case SEEK_END:
+                        return -EUNIMP;
+                default:
+                        return -EINVARG;
+        }
+        
+        return 0;
 }
