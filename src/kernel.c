@@ -38,10 +38,20 @@ void run_smoke_tests()
 
 	/* VFS and FAT16 */
 	int fd = fopen("0:/hello.txt", "r");
-	if (fd < 0)
+	if (fd < 0) {
 		print("Error opening file\n");	
-	else
+	} else {
 		print("We opened '0:/hello.txt'\n");
+		int length = strlen("Hello World");
+		char buf[length];
+		if (fread(buf, 1, length, fd) != length) {
+			print("ERROR: fread");
+		} else {
+			print("Contents of 0:/hello.txt: ");
+			print(buf);
+			print("\n");
+		}
+	}		
 }
 
 void kernel_main()

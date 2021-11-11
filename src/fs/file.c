@@ -153,7 +153,7 @@ int fopen(const char *filename, const char *mode_str)
 
         void *file_priv_data = disk->filesystem->fs_open(disk, path_root->first, file_mode);
         if (IS_ERROR(file_priv_data))
-                return ERROR_I(file_priv_data);         // CHECK: should this be -ERROR_I(file_priv_data)?
+                return ERROR_I(file_priv_data);
 
         int rc = 0;
         struct file_descriptor *file = 0;
@@ -166,7 +166,7 @@ int fopen(const char *filename, const char *mode_str)
         return file->index;
 }
 
-int fread(void *ptr, uint32_t size, uint32_t nmemb, int fd)
+size_t fread(void *ptr, size_t size, size_t nmemb, int fd)
 {
         if (size == 0 || nmemb == 0 || fd < 0)
                 return -EINVARG;
@@ -175,6 +175,6 @@ int fread(void *ptr, uint32_t size, uint32_t nmemb, int fd)
         if (!desc)
                 return -EINVARG;
 
-        int rc = desc->filesystem->fs_read(desc->disk, desc->private, size, nmemb, (char *)ptr);
+        int rc = desc->filesystem->fs_fread(desc->disk, desc->private, size, nmemb, (char *)ptr);
         return rc;
 }

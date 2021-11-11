@@ -11,7 +11,7 @@
 #define FILE_H
 
 #include "fs/pparser.h"
-#include <stdint.h>
+#include <stddef.h>
 
 #define FS_NAME_MAX     20
 
@@ -53,13 +53,20 @@ struct filesystem {
          */
         int (*resolve)(struct disk *disk); 
 
-        /* fs_read - binary stream input
+        /* fs_fread - binary stream input
          *
          * Reads nmemb items of data, each size bytes long, 
-         * from the stream associated with private (private is often a file descriptor),    --> TODO: double check that private is probably a file descriptor structure e.g. fat_file_descriptor
-         * storing them at the location given by out
+         * from the stream associated with private (private is often a file descriptor),
+         * storing them at the location given by out.
+         * This function can only be called on a file, not a directory.
+         * 
+         * 
+         * Returns the count of size elements that were read.
+         * This may not always equal nmemb since an error or end-of-file may occur after some
+         * elements have already been read.
+         * Therefore, to check for failure, look for a short item count return value (or 0)
          */
-        int (*fs_read)(struct disk *disk, void *private, uint32_t size, uint32_t nmemb, char *out);
+        size_t (*fs_fread)(struct disk *disk, void *private, size_t size, size_t nmemb, char *out);
 };
 
 /* File descriptor that represents an open file */
@@ -77,8 +84,8 @@ struct file_descriptor {
         struct disk *disk;
 
         /* private will point to driver implementation specific data
-         * which will be used by other functions for finding the file on disk
-         * This field will be set by fs_open
+         * which will be used by other functions for finding the file on disk.
+         * This field will be set by fs_open.
          */
         void *private;
 };
@@ -116,18 +123,21 @@ int fopen(const char *filename, const char *mode_str);
  */
 struct filesystem *fs_resolve(struct disk *disk);
 
-/* fread - binary stream input - VFS layer
- * 
+/* fs_fread - binary stream input
+ *
  * Reads nmemb items of data, each size bytes long, 
  * from the stream associated with private (private is often a file descriptor),
- * storing them at the location given by out
+ * storing them at the location given by out.
+ * This function can only be called on a file, not a directory.
  * 
- * This function calls the fread function of the filesystem implementation that is associated with disk.
  * 
- * Returns 0 on success or < 0 on failure
+ * Returns the count of size elements that were read.
+ * This may not always equal nmemb since an error or end-of-file may occur after some
+ * elements have already been read.
+ * Therefore, to check for failure, look for a short item count return value (or 0)
  */
 //int fread(struct disk *disk, void *private, uint32_t size, uint32_t nmemb, char *out);
 // TODO: comment with why fread uses following parameters and what they mean. ptr will be location of output buffer
-int fread(void *ptr, uint32_t size, uint32_t nmemb, int fd);
+size_t fread(void *ptr, size_t size, size_t nmemb, int fd);
 
 #endif

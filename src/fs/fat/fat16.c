@@ -7,6 +7,7 @@
 #include "kernel.h"
 #include "config.h"
 #include <stdint.h>
+#include <stddef.h>
 
 #define FAT16_SIGNATURE         0x29
 #define FAT16_FAT_ENTRY_SIZE    0x02                    // In bytes
@@ -129,10 +130,12 @@ struct fat_private {
 
 int fat16_resolve(struct disk *disk);
 void *fat16_open(struct disk *disk, struct path_part *path_part, enum file_mode mode);
+size_t fat16_fread(struct disk *disk, void *descriptor, size_t size, size_t nmemb, char *out);
 
 struct filesystem fat16_fs = {
         .resolve = fat16_resolve,
-        .fs_open = fat16_fopen
+        .fs_open = fat16_fopen,
+        .fs_fread = fat16_fread
 };
 
 struct filesystem *fat16_init()
@@ -614,11 +617,44 @@ void *fat16_fopen(struct disk *disk, struct path_part *path, enum file_mode mode
                 return ERROR(-ENOMEM);
 
         fat_file_descriptor->easy_directory_entry = fat16_get_directory_entry(disk, path);
-        if (!fat_file_descriptor->easy_directory_entry)
+        if (!fat_file_descriptor->easy_directory_entry) {
+                kfree(fat_file_descriptor);
                 return ERROR(-EIO);
+        }
+                
 
         fat_file_descriptor->pos = 0;
 
         return fat_file_descriptor;
 }
 
+/* fat16_fread - binary stream input
+ *
+ * Reads nmemb items of data, each size bytes long, 
+ * from the stream associated with descriptor (a fat_file_descriptor instance),
+ * storing them at the location given by out.
+ * This function can only be called on a file, not a directory.
+ * 
+ * 
+ * Returns the count of size elements that were read.
+ * This may not always equal nmemb since an error or end-of-file may occur after some
+ * elements have already been read.  Therefore, to check for failure, 
+ * look for a short item count return value (or 0)
+ */
+size_t fat16_fread(struct disk *disk, void *descriptor, size_t size, size_t nmemb, char *out)
+{
+        struct fat_file_descriptor *desc = descriptor;
+        if (desc->easy_directory_entry->type == FAT_ITEM_TYPE_DIRECTORY) {
+                return -EINVARG;
+        }
+        struct fat_directory_entry *raw_entry = desc->easy_directory_entry->entry;
+        int offset = desc->pos;
+        size_t count = 0;
+        for (count = 0; count < nmemb; count++) {
+                if (fat16_read_internal(disk, fat16_get_first_cluster(raw_entry), offset, size, out) < 0)
+                        return count;
+                out += size;
+                offset += size;
+        }
+        return count;
+}
