@@ -56,10 +56,9 @@ struct filesystem {
         /* fs_fread - binary stream input
          *
          * Reads nmemb items of data, each size bytes long, 
-         * from the stream associated with private (private is often a file descriptor),
+         * from the stream associated with private (fs implementation specific data),
          * storing them at the location given by out.
          * This function can only be called on a file, not a directory.
-         * 
          * 
          * Returns the count of size elements that were read.
          * This may not always equal nmemb since an error or end-of-file may occur after some
@@ -67,6 +66,20 @@ struct filesystem {
          * Therefore, to check for failure, look for a short item count return value (or 0)
          */
         size_t (*fs_fread)(struct disk *disk, void *private, size_t size, size_t nmemb, char *out);
+
+
+        /* fs_fseek - reposition the file stream
+        *
+        * Sets the file position indicator for the file associated with private (fs implementation specific data).  
+        * The new position, measured in bytes, 
+        * is obtained by adding offset bytes to the position specified by whence.
+        * If whence is set to SEEK_SET, SEEK_CUR, or SEEK_END, the offset is relative
+        * to the start of the file, the current positoin indicator, or end-of-file, respectively.
+        * 
+        * Returns 0 on success or < 0 on failure.
+        * 
+        */
+        int (*fs_fseek)(void *private, int offset, enum file_seek_mode whence);
 };
 
 /* File descriptor that represents an open file */
@@ -139,5 +152,18 @@ struct filesystem *fs_resolve(struct disk *disk);
 //int fread(struct disk *disk, void *private, uint32_t size, uint32_t nmemb, char *out);
 // TODO: comment with why fread uses following parameters and what they mean. ptr will be location of output buffer
 size_t fread(void *ptr, size_t size, size_t nmemb, int fd);
+
+/* fseek - reposition the file stream
+ *
+ * Sets the file position indicator for the file represented by the 
+ * file descriptor fd.  The new position, measured in bytes, 
+ * is obtained by adding offset bytes to the position specified by whence.
+ * If whence is set to SEEK_SET, SEEK_CUR, or SEEK_END, the offset is relative
+ * to the start of the file, the current positoin indicator, or end-of-file, respectively.
+ * 
+ * Returns 0 on success or < 0 on failure.
+ * 
+ */
+int fseek(int fd, int offset, enum file_seek_mode whence);
 
 #endif

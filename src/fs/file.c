@@ -178,3 +178,12 @@ size_t fread(void *ptr, size_t size, size_t nmemb, int fd)
         int rc = desc->filesystem->fs_fread(desc->disk, desc->private, size, nmemb, (char *)ptr);
         return rc;
 }
+
+int fseek(int fd, int offset, enum file_seek_mode whence)
+{
+        struct file_descriptor *desc = file_get_descriptor(fd);
+        if (!desc)
+                return -EINVARG;
+        
+        return desc->filesystem->fs_fseek(desc->private, offset, whence);
+}
