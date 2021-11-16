@@ -14,6 +14,7 @@
 
 void run_smoke_tests()
 {
+	print("Begin Tests --------------------------\n");
 	/* Test path parsing */
 	struct path_root *root_path = pparser_parse("0:/bin/shell.bin", NULL);
 	if (root_path)
@@ -59,7 +60,10 @@ void run_smoke_tests()
 		} else {
 			print("ERROR: fstat\n");
 		}
+		fclose(fd);
+		print("Closed file descriptor\n");
 	}
+	print("End Tests --------------------------\n\n");
 }
 
 void kernel_main()

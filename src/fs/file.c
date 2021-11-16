@@ -66,6 +66,12 @@ void fs_init()
         fs_static_load();
 }
 
+static void free_file_descriptor(struct file_descriptor *desc)
+{
+      file_descriptors[desc->index] = 0;
+      kfree(desc);
+}
+
 /* Searches for an open slot in file_descriptors.  If it finds one, it will
  * allocate a new file descriptor and assign desc_out the address of the pointer to that new file descriptor.
  * Returns 0 on success or -ENOMEM on failure
@@ -195,4 +201,15 @@ int fstat(int fd, struct file_stat *stat)
                 return -EINVARG;
 
         return desc->filesystem->fs_fstat(desc->disk, desc->private, stat);
+}
+
+int fclose(int fd)
+{
+        struct file_descriptor *desc = file_get_descriptor(fd);
+        if (!desc)
+                return -EINVARG;
+
+        desc->filesystem->fs_fclose(desc->private);
+        free_file_descriptor(desc);
+        return 0;
 }

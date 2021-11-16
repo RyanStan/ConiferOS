@@ -133,13 +133,15 @@ void *fat16_open(struct disk *disk, struct path_part *path_part, enum file_mode 
 size_t fat16_fread(struct disk *disk, void *descriptor, size_t size, size_t nmemb, char *out);
 int fat16_fseek(void *private, size_t offset, enum file_seek_mode whence);
 int fat16_fstat(struct disk *disk, void *private, struct file_stat *stat);
+int fat16_fclose(void *private);
 
 struct filesystem fat16_fs = {
         .resolve = fat16_resolve,
         .fs_open = fat16_fopen,
         .fs_fread = fat16_fread,
         .fs_fseek = fat16_fseek,
-        .fs_fstat = fat16_fstat
+        .fs_fstat = fat16_fstat,
+        .fs_fclose = fat16_fclose
 };
 
 struct filesystem *fat16_init()
@@ -725,5 +727,22 @@ int fat16_fstat(struct disk *disk, void *private, struct file_stat *stat)
                 stat->flags |= FILE_STAT_READ_ONLY;
         }
 
+        return 0;
+}
+
+static void fat16_free_file_descriptor(struct fat_file_descriptor *desc)
+{
+        fat16_easy_dir_entry_free(desc->easy_directory_entry);
+        kfree(desc);
+}
+
+/* fat16_fclose - close a stream
+ *
+ * Closes the file associated with the file descriptor fd.
+ * Returns 0 on success or < 0 on failure.
+ */
+int fat16_fclose(void *private)
+{
+        fat16_free_file_descriptor((struct fat_file_descriptor *) private);
         return 0;
 }

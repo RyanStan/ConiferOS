@@ -98,6 +98,13 @@ struct filesystem {
          * Integer return value of 0 on success or < 0 on failure.
          */
         int (*fs_fstat)(struct disk *disk, void *private, struct file_stat *stat);
+
+        /* fs_fclose - close a stream
+         *
+         * Closes the file associated with private (fs implementation specific data).
+         * Returns 0 on success or < 0 on failure.
+         */
+        int (*fs_fclose)(void *private);
 };
 
 /* File descriptor that represents an open file */
@@ -154,11 +161,11 @@ int fopen(const char *filename, const char *mode_str);
  */
 struct filesystem *fs_resolve(struct disk *disk);
 
-/* fs_fread - binary stream input
+/* fread - binary stream input
  *
  * Reads nmemb items of data, each size bytes long, 
- * from the stream associated with private (private is often a file descriptor),
- * storing them at the location given by out.
+ * from the file stream associated with the file descriptor fd.
+ * Stores the read data at the location given by ptr.
  * This function can only be called on a file, not a directory.
  * 
  * 
@@ -167,8 +174,6 @@ struct filesystem *fs_resolve(struct disk *disk);
  * elements have already been read.
  * Therefore, to check for failure, look for a short item count return value (or 0)
  */
-//int fread(struct disk *disk, void *private, uint32_t size, uint32_t nmemb, char *out);
-// TODO: comment with why fread uses following parameters and what they mean. ptr will be location of output buffer
 size_t fread(void *ptr, size_t size, size_t nmemb, int fd);
 
 /* fseek - reposition the file stream
@@ -194,5 +199,11 @@ int fseek(int fd, size_t offset, enum file_seek_mode whence);
  */
 int fstat(int fd, struct file_stat *stat);
 
+/* fclose - close a stream
+ *
+ * Closes the file associated with the file descriptor fd.
+ * Returns 0 on success or < 0 on failure.
+ */
+int fclose(int fd);
 
 #endif
