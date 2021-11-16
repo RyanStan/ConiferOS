@@ -36,21 +36,16 @@ static struct filesystem **get_free_fs_slot()
 
 void fs_insert_filesystem(struct filesystem *filesystem)
 {
-        //TODO: implement a panic for the case when a valid filesystem is not passed in or there are no free fs slots
-
         if (!filesystem) {
-                print("fs_insert_filesystem passed invalid argument"); 
-                while (1) {}
+                panic("ERROR: fs_insert_filesystem passed invalid filesystem");
         }
 
         struct filesystem **fs = get_free_fs_slot();
         if (!fs) {
-                print("Problem inserting filesystem"); 
-                while (1) {}
+                panic("ERROR: fs_insert_filesystem no free fs slots");
         }
 
         *fs = filesystem;
-
 }
 
 /* Loads filesystems that are built into the kernel at compile time */

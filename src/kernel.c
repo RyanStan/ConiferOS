@@ -10,8 +10,13 @@
 #include "fs/file.h"
 #include "string/string.h"
 
-/* TODO: Create a test file that tests different functionality like paging, the heaps, my file parser, etc... */
+void panic(const char *msg)
+{
+	print(msg);
+	for(;;) {}
+}
 
+/* TODO: Create a test file that tests different functionality like paging, the heaps, my file parser, etc... */
 void run_smoke_tests()
 {
 	print("Begin Tests --------------------------\n");
