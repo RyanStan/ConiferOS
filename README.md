@@ -13,22 +13,24 @@ You can find the emulated hardware specs here: [i440fx PC](https://www.qemu.org/
 - Download binutils into `$HOME/src`
 - Download gcc into `$HOME/src`
 - Clone the repo
-- Execute `scripts/install_gcc_deps.sh` (one time only)
-- Execute `scripts/build_binutils.sh` (one time only)
-- Execute `scripts/build_gcc.sh` (one time only)
-- Execute 'scripts/build.sh`
-- Execute `make run` to run the code
+- `scripts/install_gcc_deps.sh` (one time only)
+- `scripts/build_binutils.sh` (one time only)
+- `scripts/build_gcc.sh` (one time only)
+- `scripts/build.sh`
+- `make run` to run the code
 
 At some point, I want to simplify this setup process.  It's somewhat redundant.
 
 ## Overview
 
 ### Booting
-The BIOS will load the boot sector into memory and will execute it.
-Our boot sector is defined by [boot.asm](src/boot/boot.asm) which gets written to the first sector in our disk image.
-Our bootloader does typical bootloader things: initialize registers, jump to protected mode, and load the rest of our kernel into memory.
-We load our kernel (100 sectors of the disk, 1 KB) into the address 0x0100000 and then jump to it.
+The BIOS will load the boot sector into memory and execute it.
+Our FAT (File Allocation Table filesystem) boot sector is defined by [boot.asm](src/boot/boot.asm) which gets written to the first sector in our disk image.
 
-It's also worth noting that this boot sector is actually a FAT boot sector.  We've formatted the disk for 
-the File Allocation Table (FAT) filesystem.
+Our bootloader does two main things: enter protected mode and load our kernel (100 sectors of the disk, 1 KB) into memory at 0x0100000 and then jump to it.
+
+### The Kernel Entry Point
+The code that the bootloader jumps to once the kernel is in memory 
+starts with [kernel.asm](src/kernel.asm).  From here, we call kernel_main
+which is in [kernel.c](src/kernel.c).  
 
