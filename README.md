@@ -7,19 +7,21 @@ This kernel is built on a QEMU x86 System emulator.
 You can find the emulated hardware specs here: [i440fx PC](https://www.qemu.org/docs/master/system/i386/pc.html).
 
 ## How to Run
+### System Setup
 - `sudo apt upgrade`
 - `sudo apt install nasm`
 - `sudo apt install qemu-system-x86`
 - Download binutils into `$HOME/src`
 - Download gcc into `$HOME/src`
 - Clone the repo
-- `scripts/install_gcc_deps.sh` (one time only)
-- `scripts/build_binutils.sh` (one time only)
-- `scripts/build_gcc.sh` (one time only)
+- `scripts/install_gcc_deps.sh`
+- `scripts/build_binutils.sh`
+- `scripts/build_gcc.sh`
+### Building and Running
 - `scripts/build.sh`
-- `make run` to run the code
+- `make run`
 
-At some point, I want to simplify this setup process.  It's somewhat redundant.
+At some point, I want to simplify this process.  It's somewhat redundant.
 
 ## Overview
 
