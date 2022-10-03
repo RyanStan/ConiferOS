@@ -31,6 +31,67 @@ Our bootloader does two main things: enter protected mode and load our kernel (1
 
 ### The Kernel Entry Point
 The code that the bootloader jumps to once the kernel is in memory 
-starts with [kernel.asm](src/kernel.asm).  From here, we call kernel_main
+starts with [kernel.asm](src/kernel.asm).  From here, I call kernel_main
 which is in [kernel.c](src/kernel.c).  
 
+### Interupts
+The hardware emulated by QEMU provides a traditional PIC.  
+An interface to configure the interrupt descriptor table is provided by 
+[idt.h](src/idt/idt.h). In [kernel.c](src/kernel.c), I initialize the idt with `idt_init()`.
+
+### Paging
+From [kernel.c](src/kernel.c):
+```
+struct paging_desc *paging = init_page_tables(PAGING_READ_WRITE | PAGING_PRESENT | PAGING_USER_SUPERVISOR);
+paging_switch(get_pgd(paging));
+enable_paging();
+```
+
+An interface to interact with the page global directory (pgd) and to enable paging is provided by 
+[paging.h](src/memory/paging/paging.h).  Currently, paging is configured so that every linear (and virtual) address 
+has a 1:1 relationship with the corresponding physical address. E.g. the linear address 0x20 maps to physical address 0x20.
+
+### The Heap
+An interface to generate heaps, which manage a pool of memory (technically virtual address space),
+is defined in [heap.h](src/memory/heap/heap.h) and the allocation algorithm is described in 
+the [heap README](src/memory/heap/README.md).  
+
+Since I want all kernel processes to use the same heap, [kernel_heap.h](src/memory/heap/kernel_heap.h)
+provides the kernel code with a heap to use for allocating memory.
+
+### I/O
+[io.h](src/io/io.h) provides an interface to interact with external hardware via the 
+emulated system's I/O bus.  This is crucial for interacting with external hardware like
+the hard disk drive.
+
+### Disk Operations
+[disk.h](src/disk/disk.h) provides structures to represent attached disks and to 
+read blocks from a given disk.  To search and initialize structures for all the disks, the entry point is `disk_search_and_init()`.
+However, dynamic disk mounting isn't available yet,
+and thus the code expects to have only one disk formatted for the FAT filesystem attached.
+
+To make life easier, [disk_stream.h](src/disk/disk_stream.h) allows us to work with arbitrary sizes from disk 
+by providing a disk stream interface.  This is the foundation for the filesystem driver.
+
+### The Virtual FIle System Layer
+Much like of Linux provides a virtual file system independent of the underlying 
+file system, [file.h](src/fs/file.h), allows for filesystems to be dynamically inserted at runtime
+(see `fs_insert_filesystem`).  These dynamically inserted filesystems must conform to the 
+`filesystem` struct.  This means they must provide several functions like `fs_open`, `resolve`, `fs_read`, etc.
+The `resolve` function is especially important - when initializing disks, the disk code will attempt to resolve each
+disk against a given filesystem.  Thus, each filesystem must implement this `resolve` function so that the disk can pair 
+a filesystem implementation to a given disk.
+
+### FAT Filesystem
+The FAT filesystem is the only filesystem I've implemented so far.  See [fat16.h](src/fs/fat/fat16.h).
+
+## What's Next?
+I'm still working through the course.  Topics left are implementing processes, creating user-space
+functionality, making paging useful, creating an ELF loader, kernel commands, and libraries like stdlib.
+
+Once I finish the course, there's several things I want to experiment with:
+- A networking stack.  The emulator also provides a network card to interact with.
+- Dynamic device drivers so that the kernel can support interacting with different hardware.
+- Making the heap allocation algorithm more efficient.  Right now, it's a fragmented mess. 
+- I'd like to implement an ext filesystem.
+- It would be neat to run the OS on bare-metal. I'd have to find an old machine and disk drive.

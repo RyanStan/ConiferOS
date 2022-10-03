@@ -11,7 +11,7 @@ Array of one byte values that represent each entry in our heap data pool.
 
 Bit 7 | Bit 6 | Bit 5 | Bit 4 | Bit 3 | Bit 2 | Bit 1 | Bit 0
 ----- | ----- | ----- | ----- | ----- | ----- | ----- | -----
-HAS\_N | IS\_FIRST | | 0 | 0 | ET\_3 | ET\_2 | ET\_1 ET\_0
+HAS\_N | IS\_FIRST |  0 | 0 | ET\_3 | ET\_2 | ET\_1 | ET\_0
 
 * HAS\_N = Set if the entry to the right is part of this allocation
 * IS\_FIRST = Set if this is the first entry of this allocation
