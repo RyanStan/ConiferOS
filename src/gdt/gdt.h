@@ -23,9 +23,11 @@ struct segment_descriptor_raw {
 } __attribute__((packed));
 
 struct segment_descriptor {
+    /* These fields are byte granular */
+    /* Thus, base and limit can be max 4 GB. */
     uint32_t base;
-    uint32_t limit;
-    uint8_t type;
+    uint32_t limit;         
+    uint8_t type;               // Corresponds to Access byte
 };
 
 struct gdt {
