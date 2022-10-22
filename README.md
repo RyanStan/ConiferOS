@@ -40,6 +40,8 @@ which is in [kernel.c](src/kernel.c).
 The hardware emulated by QEMU provides a traditional PIC.  
 An interface to configure the interrupt descriptor table is provided by 
 [idt.h](src/idt/idt.h). In [kernel.c](src/kernel.c), I initialize the idt with `idt_init()`.
+Currently, there's an interrupt handler for int 0x00 and int 0x21 (keyboard interrupt).
+These handlers are set in `idt_init` in [idt.c](src/idt/idt.c). 
 
 ### Paging
 From [kernel.c](src/kernel.c):
@@ -86,6 +88,9 @@ a filesystem implementation to a given disk.
 
 ### FAT Filesystem
 The FAT filesystem is the only filesystem I've implemented so far.  See [fat16.h](src/fs/fat/fat16.h).
+
+### Build
+TODO: add section on linker script
 
 ## What's Next?
 I'm still working through the course.  Topics left are implementing processes, creating user-space
