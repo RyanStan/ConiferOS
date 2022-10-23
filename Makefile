@@ -26,7 +26,9 @@ MODULES = build/kernel.asm.o build/kernel.o \
 	build/memory/paging/paging.asm.o build/disk/disk.o \
 	build/string/string.o build/fs/pparser.o \
 	build/disk/disk_stream.o build/fs/file.o \
-	build/fs/fat/fat16.o
+	build/fs/fat/fat16.o \
+	build/gdt/gdt.o build/gdt/gdt.asm.o
+	
 FLAGS = -g -ffreestanding -falign-jumps -falign-functions -falign-labels \
 	-falign-loops -fstrength-reduce -fomit-frame-pointer \
 	-finline-functions -Wno-unused-function -fno-builtin \
@@ -70,6 +72,12 @@ build/idt/idt.asm.o:  src/idt/idt.asm
 
 build/idt/idt.o: src/idt/idt.c
 	i686-elf-gcc -I $(INCLUDES) src/idt $(FLAGS) -c $^ -o $@
+
+build/gdt/gdt.asm.o:  src/gdt/gdt.asm
+	nasm -f elf -g $^ -o $@
+
+build/gdt/gdt.o: src/gdt/gdt.c
+	i686-elf-gcc -I $(INCLUDES) src/gdt $(FLAGS) -c $^ -o $@
 
 build/memory/memory.o: src/memory/memory.c
 	i686-elf-gcc -I $(INCLUDES) src/memory $(FLAGS) -c $^ -o $@

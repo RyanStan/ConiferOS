@@ -16,5 +16,13 @@ How to run with gdb:
 Helpful gdb commands:
 	'layout asm'
 	'info registers'
+	'b <file>:<line>'
+	'c'
+	'tui enable'
+	'step'
+	'next'
+	'stepi'
+	'x /1wx 0x380' --> print out 32 bits at address 0x380 and format has hex
+	'x /1hu 0x380' --> print out the 16 bits at 0x380 and format has unsigned decimal
 
 

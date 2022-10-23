@@ -1,4 +1,5 @@
 #include "gdt.h"
+#include "kernel.h"
 
 // The max value you can store in 16 bits is 65535
 #define MAX_20_BITS 1048575
@@ -7,9 +8,9 @@
 #define FALSE		0
 #define TRUE		1
 
-/* Returns true if first 12 bits of val are 0 */
-int areFirst12BitsZero(uint32_t val) {
-    if (val & 0xFFF != 0)                                   /* Equivalent to if (val | ~0xFFF != ~0xFFF) */
+/* Returns true if first 12 bits of val are 1 */
+int areFirst12BitsOne(uint32_t val) {
+    if ((val & 0xFFF) != 0xFFF)                                   /* Equivalent to if (val | ~0xFFF != ~0xFFF) */
         return FALSE;
     
     return TRUE;
@@ -34,7 +35,7 @@ void encodeSegmentDescriptor(uint8_t *target_seg_desc_raw, struct segment_descri
      * Since we're then encoding with page granularity, we lose a certain amount of precision (12 bits), since we can't
      * address individual bytes within a page
      */
-    if ((source.limit > MAX_20_BITS) && !areFirst12BitsZero(source.limit)) {
+    if ((source.limit > MAX_20_BITS) && !areFirst12BitsOne(source.limit)) {
         panic("encodeSegmentDescriptor: Invalid argument\n");
     }
 

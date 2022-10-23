@@ -89,6 +89,12 @@ a filesystem implementation to a given disk.
 ### FAT Filesystem
 The FAT filesystem is the only filesystem I've implemented so far.  See [fat16.h](src/fs/fat/fat16.h).
 
+### GDT
+The GDT is loaded into memory and initially configured with Code and Data segments in [boot.asm](src/boot/boot.asm).
+However, since the GDT must be modified again down the road, and interface for interacting with the GDT is provided in 
+[gdt.h](src/gdt/gdt.h).  Much like the Linux Kernel, ConiferOS doesn't make explicity use of segmentation, 
+and instead has kernel/user code and data segments share the entire address space.
+
 ### Build
 TODO: add section on linker script
 

@@ -2,7 +2,7 @@
 #define GDT_H
 
 #include <stdint.h>
-
+#include "config.h"
 
 struct segment_descriptor_raw {
     uint16_t segment_limit;     // The size of the segment. 
@@ -30,13 +30,21 @@ struct segment_descriptor {
     uint8_t type;               // Corresponds to Access byte
 };
 
+/* TODO: this is a good idea eventually - just have to figure out the assembly intepretation
 struct gdt {
-    struct segment_descriptor_raw *initial_gdt_entry;
+    struct segment_descriptor_raw gdt_entry[TOTAL_GDT_SEGMENTS];
+    int num_entries;
 };
+*/
 
 /* Converts a list of segment_descriptor into a list of segment_descriptor_raw 
  * total_entries is the length of each list
  */
 void segment_descriptor_to_raw(struct segment_descriptor_raw* raw, struct segment_descriptor *desc, int total_entries);
+
+/* Load gdt by updating gdtr to reference it. Size is the number of entries in the gdt 
+ * TODO: this function should take gdt and do gdt_raw conversion itself
+ */
+void gdt_load(struct segment_descriptor_raw *gdt, uint16_t size);
 
 #endif

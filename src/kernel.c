@@ -4,17 +4,28 @@
 #include "io/io.h"
 #include "memory/heap/kernel_heap.h"
 #include "memory/paging/paging.h"
+#include "memory/memory.h"
 #include "disk/disk.h"
 #include "disk/disk_stream.h"
 #include "fs/pparser.h"
 #include "fs/file.h"
 #include "string/string.h"
+#include "gdt/gdt.h"
+#include "config.h"
 
 void panic(const char *msg)
 {
 	print(msg);
 	for(;;) {}
 }
+
+/* Set up the GDT */
+struct segment_descriptor_raw gdt_raw[TOTAL_GDT_SEGMENTS];
+struct segment_descriptor gdt[TOTAL_GDT_SEGMENTS] = {
+	{.base = 0x00, .limit = 0x00, .type = 0x00},					/* NULL segment - used to load other segment registers */
+	{.base = 0x00, .limit = 0xffffffff, .type = 0x9a},				/* Kernel code segment */
+	{.base = 0x00, .limit = 0xffffffff, .type = 0x92}				/* Kernel data segment */
+};
 
 /* TODO: Create a test file that tests different functionality like paging, the heaps, my file parser, etc... */
 void run_smoke_tests()
@@ -74,6 +85,10 @@ void run_smoke_tests()
 void kernel_main()
 {
 	terminal_initialize();
+
+	memset(gdt_raw, 0x00, sizeof(gdt_raw));
+	segment_descriptor_to_raw(gdt_raw, gdt, TOTAL_GDT_SEGMENTS);
+	gdt_load(gdt_raw, sizeof(gdt_raw));	
 
 	kernel_heap_init();
 
