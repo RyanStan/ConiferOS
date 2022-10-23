@@ -1,8 +1,8 @@
 section .asm
 global gdt_load
 
-; Need to debug this better.  Stepping through with gdb is not very enlightening as to weather
-; correct values are being passed in
+; https://stackoverflow.com/questions/74175454/x86-why-does-c-function-disassembly-show-different-value-for-pointer-when-pushed
+; Still resolving above issue
 
 gdt_load:
     mov eax, [esp + 4]              ; Load the first arg (pointer to first gdt entry) into eax register
