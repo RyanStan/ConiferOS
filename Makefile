@@ -2,13 +2,6 @@
 #
 # 	bin/disk.img is the flat hard disk that the emulator will see
 #
-#
-# 	what the bin/kernel.bin target recipe is doing:
-# 		-the first command links together all our object files into another large intermediary relocatable object file (build/kernelfull.o)
-# 		-the second command tells gcc to use our linker script and ld to turn our intermediary relocatable object file (build/kernelfull.o) into a binary at bin/kernel.bin
-# 		  using gcc since in the future we will be compiling c files in with this command.  When an object file is passed to gcc, gcc
-# 		  skips compilation and instead directly invokes the linker (i686-elf-ld)
-#
 #	SPECIAL VARIABLES REFERENCE
 #	$^ = name of all the dependencies with space as the delimiter
 #	$@ = full target name of the current target
@@ -52,8 +45,8 @@ bin/os.bin: bin/boot.bin bin/kernel.bin
 	dd if=/dev/zero bs=1048576 count=16 >> bin/os.bin # Fills up rest of disk with 16, 1 MB sized blocks of zeros (this will be used by Linux to store our file data)
 
 bin/kernel.bin: $(MODULES)
-	i686-elf-ld -g -relocatable $(MODULES) -o build/kernelfull.o
-	i686-elf-gcc $(FLAGS) -T src/linker.ld -o bin/kernel.bin -ffreestanding -O0 -nostdlib build/kernelfull.o
+	i686-elf-gcc $(FLAGS) -ffreestanding -O0 -nostdlib  -T src/linker.ld $(MODULES) -o bin/kernel.elf 
+	i686-elf-objcopy -O binary bin/kernel.elf bin/kernel.bin
 	
 bin/boot.bin: src/boot/boot.asm
 	nasm -f bin $^ -o $@
@@ -122,7 +115,6 @@ clean:
 	rm -rf bin/boot.bin
 	rm -rf bin/kernel.bin
 	rm -rf bin/os.bin
-	rm -rf build/kernelfull.o
 	rm -rf ${MODULES}
 	rm -rf bin/disk.img
 	rm -rf ./hello.txt
