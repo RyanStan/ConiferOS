@@ -4,6 +4,18 @@
 #include <stdint.h>
 #include "config.h"
 
+
+/* Access byte bit masks 
+ * TODO: use these
+ */
+#define PRESENT_MASK            0x80
+#define DPL_MASK                0x60
+#define DESCRIPTOR_TYPE_MASK    0x10
+#define EXECUTABLE_MASK         0x08
+#define DC_MASK                 0x04
+#define RW_MASK                 0x02
+#define ACCESSED_MASK           0x01
+
 struct segment_descriptor_raw {
     uint16_t segment_limit;     // The size of the segment. 
     uint16_t base_first;        // The location of byte 0 of the segment within the 4 GB linear address space

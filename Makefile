@@ -20,7 +20,8 @@ MODULES = build/kernel.asm.o build/kernel.o \
 	build/string/string.o build/fs/pparser.o \
 	build/disk/disk_stream.o build/fs/file.o \
 	build/fs/fat/fat16.o \
-	build/gdt/gdt.o build/gdt/gdt.asm.o
+	build/gdt/gdt.o build/gdt/gdt.asm.o \
+	build/task/tss.asm.o
 	
 FLAGS = -g -ffreestanding -falign-jumps -falign-functions -falign-labels \
 	-falign-loops -fstrength-reduce -fomit-frame-pointer \
@@ -76,6 +77,9 @@ build/memory/memory.o: src/memory/memory.c
 	i686-elf-gcc -I $(INCLUDES) src/memory $(FLAGS) -c $^ -o $@
 
 build/io/io.asm.o:  src/io/io.asm
+	nasm -f elf -g $^ -o $@
+
+build/task/tss.asm.o:  src/task/tss.asm
 	nasm -f elf -g $^ -o $@
 
 build/memory/heap/heap.o: src/memory/heap/heap.c

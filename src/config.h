@@ -1,6 +1,7 @@
 #ifndef CONFIG_H
 #define CONFIG_H
 
+/* selector = byte index into GDT for corresponding segment descriptor */
 #define KERNEL_CODE_SELECTOR         0x08;
 #define KERNEL_DATA_SELECTOR         0x10;
 
@@ -17,6 +18,8 @@
 #define MAX_FILESYSTEMS             12              /* The max # of filesystems drivers which can be loaded into the kernel (only at compile time for now)*/
 #define MAX_OPEN_FILES              512             /* Max # of open file descriptors at once */
 
-#define TOTAL_GDT_SEGMENTS          3               /* The number of segments described by the GDT */
+#define TOTAL_GDT_SEGMENTS          6               /* The number of segments described by the GDT */
+
+#define KERNEL_STACK_ADDR           0x600000;       /* Address of the kernel stack. Loaded into esp on switch to kernel mode. */
 
 #endif
