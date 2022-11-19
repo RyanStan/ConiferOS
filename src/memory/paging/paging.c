@@ -2,17 +2,18 @@
 #include "memory/heap/kernel_heap.h"
 #include "status.h"
 
-// instead of paging_new_4gb it seems much cleaner to just have an initialize paging function 
-// paging_4gb_chunk seems like a weird way of doing it
-// maybe I can refer back to how Linux does it.. (each process struct has a pointer to pgd)
+/* Size of memory that we can reach via paging:
+ * We have one pgd with 1024 entries and each of those entries points to a page table.  Thus, we have 1024 * 1024 page table entries, or 1,048,576 pages.
+ * We're using 4 KB pages, so this indicates we have access to 4,294,967,296 bytes, or 0x1 0000 0000.  This adds up to 4 GiB.
+ */
 
-// since we're not using pae, we'll only be able to address 4gb physical memory
-// want to look at linux kernel code to see how page tables are initialized there... they use internal heap allocation functions too?
+#define PAGE_TABLE_ENTRY_FLAGS_MASK 0x00000FFF  /* The last 12 bits of a page table entry are just flags, since pages are aligned at 4 MB, or 2^12 */
 
 static uint32_t* current_pgd = 0;
 
 void paging_load_pgd(uint32_t* pgd);
 
+/* Create a direct mapping between linear and physical addresses */
 struct paging_desc* init_page_tables(uint8_t flags)
 {
         /* allocate the page global directory */
@@ -88,8 +89,14 @@ int paging_set(uint32_t *pgd, void *virtual_address, uint32_t val)
         return 0;
 }
 
+void free_page_tables(struct paging_desc *paging)
+{
+        for (int i = 0; i < PAGING_DIR_ENTRIES; i++) {
+                uint32_t pgd_entry = paging->pgd[i];
+                uint32_t *page_table = (uint32_t*)(pgd_entry * ~PAGE_TABLE_ENTRY_FLAGS_MASK);
+                kfree(page_table);
+        }
 
-// need to implement past 18 minute mark
-// my question: we have one pgd with 1024 entries and each of those entries points to a page table.  Thus, we have 1024 * 1024 page table entries, or 1,048,576 pages.
-//              This indicates we have access to 4,294,967,296 bytes, or 0x1 0000 0000.  This adds up to 4 gb, all is good
-// need to review setting up the stack frame in assembly. forgot what ebp and esp are.  e.g. what is the point of push ebp and then mov ebp, esp
+        kfree(paging->pgd);
+        kfree(paging);
+}

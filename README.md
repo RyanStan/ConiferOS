@@ -95,6 +95,8 @@ However, since the GDT must be modified again down the road, and interface for i
 [gdt.h](src/gdt/gdt.h).  Much like the Linux Kernel, ConiferOS doesn't make explicity use of segmentation, 
 and instead has kernel/user code and data segments share the entire address space.
 
+### Tasks
+
 ### Build
 TODO: add section on linker script
 

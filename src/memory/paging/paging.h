@@ -5,12 +5,12 @@
 #include <stdbool.h>
 
 
-/* Bitmasks for page table and page directory entries TODO: should I append MASK to these names?*/
+/* Bitmasks for page table and page directory entries */
 #define PAGING_CACHE_DISABLE    0b00010000              // PCD
 #define PAGING_WRITE_THROUGH    0b00001000              // PWT
-#define PAGING_USER_SUPERVISOR  0b00000100
-#define PAGING_READ_WRITE       0b00000010
-#define PAGING_PRESENT          0b00000001
+#define PAGING_USER_SUPERVISOR  0b00000100              // Privilege level required to access page. 0 = CPL must be < 3 (kernel mode).
+#define PAGING_READ_WRITE       0b00000010              // Access right. 0 = can only be read. 1 = read and written.
+#define PAGING_PRESENT          0b00000001              // If set, the page is in main memory.
 #define PGD_ENTRY_TABLE_ADDR    0xfffff000              
 #define PTE_PAGE_FRAME_ADDR     0xfffff000
 
@@ -56,5 +56,8 @@ int paging_set(uint32_t *pgd, void *virtual_address, uint32_t val);
 
 /* Returns true if addr is aligned to page boundary, false otherwise */
 bool paging_is_aligned(void *addr);
+
+/* Free the memory allocated for the page tables associated with paging's page tables */
+void free_page_tables(struct paging_desc *paging);
 
 #endif
