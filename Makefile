@@ -118,6 +118,12 @@ build/disk/disk_stream.o: src/disk/disk_stream.c
 run:
 	qemu-system-i386 -drive file=bin/disk.img,index=0,media=disk,format=raw
 
+runcurses:
+	qemu-system-i386 -drive file=bin/disk.img,index=0,media=disk,format=raw -curses
+
+killcurses:
+	pkill qemu
+
 clean:
 	rm -rf bin/boot.bin
 	rm -rf bin/kernel.bin
