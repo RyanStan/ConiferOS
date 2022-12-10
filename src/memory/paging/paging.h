@@ -20,11 +20,21 @@
 
 #define PAGING_PAGE_SIZE        4096
 
+/*
+ * In 32-bit x86, a two level paging scheme is used.
+ * Thus, a linear address is split into 3 pieces.
+ * Bits 31 - 22 (inclusive), index the page directory.
+ * Bits 21 - 12 index the page table.
+ * Bits 11 - 0 index the byte within the page. 
+ */
+
 /* Since our system is 32 bits without PAE, we'll only have access to a 4 gb address space 
- * TODO: bad code smell, don't really like this struct.
+ * 
  */
 struct paging_desc {
-        /* page global directory.  each directory entry points to a page table */
+        /* Pointer to the first entry in the page global directory. 
+         * TODO: this should be page directory, not page global directory (pgd for 64 bit systems)
+         */
         uint32_t* pgd;                                 
 };
 
@@ -59,5 +69,21 @@ bool paging_is_aligned(void *addr);
 
 /* Free the memory allocated for the page tables associated with paging's page tables */
 void free_page_tables(struct paging_desc *paging);
+
+/* Create a mapping in the page tables at paging_desc.
+ * The virtual address space starting at virt_addr will map to the physical address space
+ * starting at phys_addr and will map num_pages pages. 
+ */
+int paging_map_range(struct paging_desc *paging_desc, void *virt_addr, void *phys_addr, int num_pages, int pg_prot);
+
+/* Create a mapping in the page tables at paging_desc.
+ * The virtual address space starting at virt_addr will map to the physical address phys_addr to phys_end_addr.
+ * The page protection flags, pg_prot, describe the flags that are applied to the page table entries for this mapping.
+ * This function expects all the arguments to be properly page aligned. 
+ */
+int paging_create_mapping(struct paging_desc *paging_desc, void *virt_addr, void *phys_addr, void *phys_end_addr, int pg_prot);
+
+/* Rounds addr up so that it is page aligned */
+void *paging_align_address(void *addr);
 
 #endif

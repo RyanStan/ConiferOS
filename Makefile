@@ -21,7 +21,8 @@ MODULES = build/kernel.asm.o build/kernel.o \
 	build/disk/disk_stream.o build/fs/file.o \
 	build/fs/fat/fat16.o \
 	build/gdt/gdt.o build/gdt/gdt.asm.o \
-	build/task/tss.asm.o build/task/task.o
+	build/task/tss.asm.o build/task/task.o \
+	build/task/process.o
 	
 FLAGS = -g -ffreestanding -falign-jumps -falign-functions -falign-labels \
 	-falign-loops -fstrength-reduce -fomit-frame-pointer \
@@ -80,7 +81,10 @@ build/io/io.asm.o:  src/io/io.asm
 	nasm -f elf -g $^ -o $@
 
 build/task/task.o: src/task/task.c
-	i686-elf-gcc -I $(INCLUDES) src/gdt $(FLAGS) -c $^ -o $@
+	i686-elf-gcc -I $(INCLUDES) src/task $(FLAGS) -c $^ -o $@
+
+build/task/process.o: src/task/process.c
+	i686-elf-gcc -I $(INCLUDES) src/task $(FLAGS) -c $^ -o $@
 
 build/task/tss.asm.o:  src/task/tss.asm
 	nasm -f elf -g $^ -o $@

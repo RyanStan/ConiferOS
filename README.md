@@ -51,9 +51,13 @@ paging_switch(get_pgd(paging));
 enable_paging();
 ```
 
-An interface to interact with the page global directory and to enable paging is provided by 
-[paging.h](src/memory/paging/paging.h).  Currently, paging is configured so that every linear (and virtual) address 
+An interface to interact with the paging data structures and to enable paging is provided by 
+[paging.h](src/memory/paging/paging.h).  Currently, paging for kernel land is configured so that every linear (and virtual) address 
 has a 1:1 relationship with the corresponding physical address. E.g. the linear address 0x20 maps to physical address 0x20.
+There's no concept of "high memory" for the kernel at the moment, and no split in the virtual address space between user land and kernel land.
+
+In 32-bit x86 with 4-KByte pages, a two level paging scheme is used.  Each linear address maps an index into the page directory,
+and index into the corresponding page table, and the byte offset within the page.
 
 ### The Heap
 An interface to generate heaps, which manage a pool of memory (technically virtual address space),
@@ -95,7 +99,19 @@ However, since the GDT must be modified again down the road, and interface for i
 [gdt.h](src/gdt/gdt.h).  Much like the Linux Kernel, ConiferOS doesn't make explicity use of segmentation, 
 and instead has kernel/user code and data segments share the entire address space.
 
-### Tasks
+### Processes and Tasks
+A task is the CPU schedulable unit in ConiferOS.  The task structure is defined in [task.h](src/task/task.h).
+Each task has it's own set of page tables.  All runnable tasks are stored together in a linked list structure.
+
+A task is owned by a process.  For now, a process only owns one task, but the intent was that a process
+can eventually own multiple process.  The process structure is defined in [process.h](src/task/process.h).
+
+When a user attempts to run an executable, a process will be created which contains reference to that executable (`filename`).
+For now, only binary executables are supported.  A process, upon initialization, will allocate space for the executable and the stack,
+and will map that memory into the page tables of the task that the process encapsulates.
+
+Eventually, I want to move away from the process abstraction.  The Linux Kernel does not differentiate between processes and threads,
+or processes and tasks, and I do not want to either.
 
 ### Build
 TODO: add section on linker script
@@ -110,3 +126,6 @@ Once I finish the course, there are several things I want to experiment with:
 - Making the heap allocation algorithm more efficient.  Right now, it's a fragmented mess. 
 - I'd like to implement an ext filesystem.
 - It would be neat to run the OS on bare-metal. I'd have to find an old machine and disk drive.
+- The Kernel land code currently disables interrupts whenever it executes, because there aren't any
+  safety mechanisms in place to support interleaving.  I would like to add some support for concurrency controls
+  for kernel land code.

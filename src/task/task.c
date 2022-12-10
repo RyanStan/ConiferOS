@@ -50,22 +50,24 @@ static void task_list_remove(struct task *task)
 
 int task_free(struct task *task)
 {
-    free_page_tables(task->paging); // TODO: implement
+    free_page_tables(task->paging);
     task_list_remove(task);
     kfree(task);
     return 0;
 }
 
 /* Initialize a task structure by setting default values */
-static int task_init(struct task *task) 
+static int task_init(struct task *task, struct process *process) 
 {
     memset(task, 0, sizeof(struct task));
 
     /* Create read only direct linear to physical mapping for entire 4 GB address space.
      * Accessible from ring 3 (user land + kernel land)
      *
-     * We set PAGING_PRESENT bit on every page table entry as opposed to mapping in pages as we need them.
+     * We set PAGING_PRESENT (P) bit on every page table entry as opposed to mapping in pages as we need them.
      * This is to keep thing simple in the beginning.
+     * TODO: Ideally, a new task should get empty page tables until they explicitly need to map in addresses
+     *       (i.e. demand paging)
      */
     task->paging = init_page_tables(PAGING_USER_SUPERVISOR | PAGING_PRESENT);
 
@@ -75,17 +77,19 @@ static int task_init(struct task *task)
     task->registers.ip = TASK_LOAD_VIRTUAL_ADDRESS;
     task->registers.ss = USER_DATA_SEGMENT;
     task->registers.esp = TASK_STACK_VIRT_ADDR;
+
+    task->process = process;
     
     return 0;
 }
 
-struct task *task_new() 
+struct task *task_new(struct process *process) 
 {
     struct task *task = kzalloc(sizeof(struct task));
     if (!task)
         return ERROR(-ENOMEM);
 
-    int rc = task_init(task);
+    int rc = task_init(task, process);
     if (rc != STATUS_OK) {
         task_free(task);
         return ERROR(-1);

@@ -100,3 +100,45 @@ void free_page_tables(struct paging_desc *paging)
         kfree(paging->pgd);
         kfree(paging);
 }
+
+int paging_map_range(struct paging_desc *paging_desc, void *virt_addr, void *phys_addr, int num_pages, int pg_prot)
+{
+    if (!paging_is_aligned(virt_addr) || !paging_is_aligned(phys_addr))
+        return -EINVARG;
+
+    void *virt_addr_copy = virt_addr;
+    void *phys_addr_copy = phys_addr;
+
+    int rc = 0;
+    for (int i = 0; i < num_pages; i++) {
+        rc = paging_set(paging_desc->pgd, virt_addr_copy, (uint32_t) phys_addr_copy | pg_prot);
+        if (rc < 0)
+            break;
+        
+        virt_addr_copy += PAGING_PAGE_SIZE;
+        phys_addr_copy += PAGING_PAGE_SIZE;
+    }
+
+    return rc;
+}
+
+int paging_create_mapping(struct paging_desc *paging_desc, void *virt_addr, void *phys_addr, void *phys_end_addr, int pg_prot)
+{
+    if (!paging_is_aligned(virt_addr) || !paging_is_aligned(phys_addr) || !paging_is_aligned(phys_end_addr))
+        return -EINVARG;
+
+    if ((uint32_t)phys_end_addr < (uint32_t)phys_addr)
+        return -EINVARG;
+
+    uint32_t total_bytes = (uint32_t)phys_end_addr - (uint32_t)phys_addr;
+    int total_pages = total_bytes / PAGING_PAGE_SIZE;
+    return paging_map_range(paging_desc, virt_addr, phys_addr, total_pages, pg_prot);
+}
+
+void *paging_align_address(void *addr)
+{
+    if (paging_is_aligned(addr))
+        return addr;
+
+    return (void*)((uint32_t)addr + PAGING_PAGE_SIZE - ((uint32_t)addr % PAGING_PAGE_SIZE));
+}

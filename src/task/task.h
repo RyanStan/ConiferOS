@@ -4,6 +4,8 @@
 #include "config.h"
 #include "memory/paging/paging.h"
 
+struct process;
+
 /* Hardware context of the task */
 struct registers {
     uint32_t edi;       // destination index register
@@ -21,6 +23,10 @@ struct registers {
     uint32_t ss;        // stack segment
 };
 
+
+/* A task is the unit of scheduling that our kernel understands. 
+ * We schedule tasks, not processes.
+ */
 struct task {
     /* Contains the pointer to the pgd for the task. Maps 4 GB of linear (virtual) to physical memory. */
     struct paging_desc *paging;
@@ -30,6 +36,9 @@ struct task {
      */
     struct registers registers;
 
+    /* The process that owns this task */
+    struct process *process;
+
     struct task *next;
     struct task *prev;
 
@@ -37,9 +46,10 @@ struct task {
 
 /* Creates a new task structure and returns a pointer to it.  Initializes
  * default values for the new task and adds it to the task list.
+ * process is the process that will own the task.
  * Returns new task on success or < 0 on failure.
  */
-struct task *task_new();
+struct task *task_new(struct process *process);
 
 /* Return the currently executing task */
 struct task *task_current();
