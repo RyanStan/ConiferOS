@@ -48,4 +48,10 @@ int strncmp(const char *s1, const char *s2, size_t n);
  */
 int strnicmp(const char *s1, const char *s2, size_t n);
 
+/* Copies the string pointed to by src, including the terminating null byte ('\0'), 
+ * to the buffer pointed to by dest.  At most n bytes of src are copied.
+ * Returns a pointer to the destination string dest.
+ */
+char *strncpy(char* dest, const char* src, size_t n);
+
 #endif

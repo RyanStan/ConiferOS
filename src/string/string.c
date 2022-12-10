@@ -106,4 +106,16 @@ int strnicmp(const char *s1, const char *s2, size_t n)
         return 0;
 }
 
+char *strncpy(char* dest, const char* src, size_t n)
+{
+        int i = 0;
+        for (i = 0; i < n - 1; i++) {
+                if (src[i] == 0x00)
+                        break;
 
+                dest[i] = src[i];
+        }
+
+        dest[i] = 0x00;
+        return dest;
+}
