@@ -57,5 +57,13 @@ struct process {
 
     enum executable_format format;
 };
+ 
+/* Loads the executable given by filename into memory, and generates a process
+ * structure (with a task) that maps the executable.  
+ * After calling, the address that process points to will now
+ * be a pointer to the new process structure.  The process's 
+ * tasks will also be ready to execute via task_exec (see task.h).
+ */
+int process_load(const char *filename, struct process **process);
 
 #endif

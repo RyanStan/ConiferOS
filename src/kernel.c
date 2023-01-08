@@ -12,6 +12,8 @@
 #include "string/string.h"
 #include "gdt/gdt.h"
 #include "task/tss.h"
+#include "task/task.h"
+#include "task/process.h"
 #include "config.h"
 
 void panic(const char *msg)
@@ -29,7 +31,7 @@ struct segment_descriptor gdt[TOTAL_GDT_SEGMENTS] = {
 	{.base = 0x00, .limit = 0xffffffff, .type = 0x9A},				/* Kernel code segment. 9A = 1001 1010. P = 0. DPL = 0 S=1 E=1 DC=0 RW=1 */
 	{.base = 0x00, .limit = 0xffffffff, .type = 0x92},				/* Kernel data segment. 92 = 1001 0010 DPL=0 RW=1*/
 	{.base = 0x00, .limit = 0xffffffff, .type = 0xF8},				/* User code segment. F8 = 1111 1000 DPL=3 RW=0 */
-	{.base = 0x00, .limit = 0xffffffff, .type = 0xF2},				/* User data segment. F2 = 1111 0010 DPL=3 RW=1 */
+	{.base = 0x00, .limit = 0xffffffff, .type = 0xF2},				/* User data segment. F2 = 1111 0010 DPL=3 RW=1. Offset = Byte 32 (0x20) */
 	{.base = (uint32_t)&tss, .limit = sizeof(tss), .type = 0xE9}	/* Task state segment. E9 = 1110 1001 S=0 DPL=3 */
 };
 #define TSS_GDT_INDEX 5
@@ -115,11 +117,18 @@ void kernel_main()
 	paging_switch(get_pgd(paging));
 	enable_paging();
 
-	enable_interrupts();
-
 	run_smoke_tests();
 
-	print("Welcome to ConiferOS");
+	print("Welcome to ConiferOS\n");
+
+	struct process *process = 0;
+	int rc = process_load("0:/blank.bin", &process);
+	if (rc < 0)
+		panic("Failed to load 0:/blank.bin\n");
+
+	// enable_interrupts(); TODO: task run code expects interrupts to be disabled...
+
+	task_exec(get_task_list_head());
 
 	return;
 }

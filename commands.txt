@@ -1,9 +1,3 @@
-nasm -f bin ./boot.asm -o boot.bin
-
-qemu-system-x86_64 -hda ./boot.bin
-
-ndisasm kernel.bin
-
 How to run with gdb:
 	make sure to use tmux and split panes
 	in one pane run: 'qemu-system-i386 -s -S -hda ./bin/disk.img'
@@ -26,3 +20,4 @@ Helpful gdb commands:
 	'x /1hu 0x380' --> print out the 16 bits at 0x380 and format has unsigned decimal
 
 
+ndisasm -b32 --> disassemble 32 bit 80x86 binary code

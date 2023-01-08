@@ -1,3 +1,4 @@
+[BITS 32]		; all code below here is seen as 32-bit code.  The brackets indicate a primitive directive
 section .asm
 global tss_load
 

@@ -54,9 +54,9 @@ void encodeSegmentDescriptor(uint8_t *target_seg_desc_raw, struct segment_descri
 
     /* Encode the base */
     target_seg_desc_raw[2] = source.base & 0xFF;
-    target_seg_desc_raw[3] = (source.base >> 8) * 0xFF;
-    target_seg_desc_raw[4] = (source.base >> 16) * 0xFF;
-    target_seg_desc_raw[7] = (source.base >> 24) * 0xFF;
+    target_seg_desc_raw[3] = (source.base >> 8) & 0xFF;
+    target_seg_desc_raw[4] = (source.base >> 16) & 0xFF;
+    target_seg_desc_raw[7] = (source.base >> 24) & 0xFF;
 
     target_seg_desc_raw[5] = source.type;
 }

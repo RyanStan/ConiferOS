@@ -8,19 +8,19 @@ struct process;
 
 /* Hardware context of the task */
 struct registers {
-    uint32_t edi;       // destination index register
-    uint32_t esi;       // source index register
-    uint32_t ebp;       // stack base pointer register
-    uint32_t ebx;       // general register
-    uint32_t edx;       // general register     
-    uint32_t ecx;       // general register
-    uint32_t eax;       // general register
+    uint32_t edi;       // destination index register       [&registers]
+    uint32_t esi;       // source index register            [&registers+4]
+    uint32_t ebp;       // stack base pointer register      [&regisers+8]
+    uint32_t ebx;       // general register                 [&registers+12]
+    uint32_t edx;       // general register                 [&registers+16]
+    uint32_t ecx;       // general register                 [&registers+20]
+    uint32_t eax;       // general register                 [&registers+24]
 
-    uint32_t ip;        // instruction pointer. Last address that was executing before task switch.
-    uint32_t cs;        // code segment
-    uint32_t eflags;    // state of the processor
-    uint32_t esp;       // stack pointer
-    uint32_t ss;        // stack segment
+    uint32_t ip;        // instruction pointer. Last address that was executing before task switch. [&registers+28]
+    uint32_t cs;        // code segment                     [&registers+32]
+    uint32_t eflags;    // state of the processor           [&registers+36]
+    uint32_t esp;       // stack pointer                    [&registers+40]
+    uint32_t ss;        // stack segment                    [&registers+44]
 };
 
 
@@ -54,11 +54,31 @@ struct task *task_new(struct process *process);
 /* Return the currently executing task */
 struct task *task_current();
 
+/* Returns the head task in the task list */
+struct task *get_task_list_head();
+
 /* Return the next task that is scheduled to execute */
 struct task *task_get_next();
 
 /* Free the memory associated with task from the kernel heap */
 int task_free(struct task *task);
+
+/* Takes us out of current kernel page directory and into current_task page directory
+ * TODO: this feels funky to me right now.  But let's wait and see how this is used
+ */
+int task_page();
+
+/* Executes the given task.
+ * This will switch the current page tables and
+ * restore registers to the state of task's registers. Finally,
+ * it will drop into userland.
+ * 
+ * The parameter task must be in the task list (task.c)
+ * before calling this function.  That can be achieved by first calling
+ * process_load (see process.h).
+ */
+void task_exec(struct task *task);
+
 
 
 #endif

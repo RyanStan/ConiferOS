@@ -39,7 +39,7 @@ struct process *process_get(int pid)
 static int process_load_binary_executable(const char *filename, struct process *process)
 {
     int fd = fopen(filename, "r");
-    if (!fd)
+    if (fd < 0)
         return -EIO;
 
     /* Get the file size */
@@ -80,8 +80,6 @@ int process_map_task_binary(struct process *process)
                                     process->executable_memory_addr, 
                                     paging_align_address(process->executable_memory_addr + process->size),
                                     PAGING_PRESENT | PAGING_USER_SUPERVISOR | PAGING_READ_WRITE);
-
-    // TODO: we still need to create a mapping for the stack as well (TASK_STACK_VIRT_ADDR).
 }
 
 /* This function maps the process's executable memory (containing executable binary file)
@@ -91,7 +89,7 @@ int process_map_task_binary(struct process *process)
  */
 int process_map_task_memory(struct process *process)
 {
-    // Map the stack's physical address into task's page tables..
+    // Map the stack's physical address into task's page tables
     int rc = paging_create_mapping(process->task->paging, (void*)TASK_STACK_VIRT_ADDR_END, process->stack_addr,
                                     paging_align_address(process->stack_addr + TASK_STACK_SIZE), 
                                     PAGING_PRESENT | PAGING_USER_SUPERVISOR | PAGING_READ_WRITE);
@@ -186,11 +184,12 @@ int process_get_free_slot()
     return -EISTAKEN;
 }
 
+
 int process_load(const char *filename, struct process **process)
 {
-    int pid = process_get_free_slot(); // TODO: implement
+    int pid = process_get_free_slot();
     if (pid < 0) {
-        print("Couild not load process.  Already at max processes.\n");
+        print("Could not load process.  Already at max processes.\n");
         return -EISTAKEN;
     }
         

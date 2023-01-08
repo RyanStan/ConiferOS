@@ -22,7 +22,7 @@ MODULES = build/kernel.asm.o build/kernel.o \
 	build/fs/fat/fat16.o \
 	build/gdt/gdt.o build/gdt/gdt.asm.o \
 	build/task/tss.asm.o build/task/task.o \
-	build/task/process.o
+	build/task/process.o build/task/task.asm.o
 	
 FLAGS = -g -ffreestanding -falign-jumps -falign-functions -falign-labels \
 	-falign-loops -fstrength-reduce -fomit-frame-pointer \
@@ -30,7 +30,7 @@ FLAGS = -g -ffreestanding -falign-jumps -falign-functions -falign-labels \
 	-Werror -Wno-unused-label -Wno-cpp -Wno-unused-parameter \
 	-nostdlib -nostartfiles -nodefaultlibs -Wall -O0 -Iinc
 
-all: bin/disk.img
+all: bin/disk.img user_programs
 
 bin/disk.img: bin/os.bin
 	cp bin/os.bin bin/disk.img
@@ -39,17 +39,21 @@ bin/disk.img: bin/os.bin
 	sudo mount -t vfat bin/disk.img /mnt/d
 	echo "Hello World" > ./hello.txt
 	sudo cp ./hello.txt /mnt/d
+	sudo cp ./programs/blank/blank.bin /mnt/d
 	sudo umount /mnt/d
 
+# os.bin is a concatenation of the boot binary and the kernel binary.
 bin/os.bin: bin/boot.bin bin/kernel.bin
 	dd if=bin/boot.bin > bin/os.bin
 	dd if=bin/kernel.bin >> bin/os.bin
 	dd if=/dev/zero bs=1048576 count=16 >> bin/os.bin # Fills up rest of disk with 16, 1 MB sized blocks of zeros (this will be used by Linux to store our file data)
 
+# kernel.bin is the binary file which contains all the kernel code
 bin/kernel.bin: $(MODULES)
 	i686-elf-gcc $(FLAGS) -ffreestanding -O0 -nostdlib  -T src/linker.ld $(MODULES) -o bin/kernel.elf 
 	i686-elf-objcopy -O binary bin/kernel.elf bin/kernel.bin
 	
+# boot.bin contains our bootloader code, and is what loads the kernel into memory.
 bin/boot.bin: src/boot/boot.asm
 	nasm -f bin $^ -o $@
 
@@ -82,6 +86,9 @@ build/io/io.asm.o:  src/io/io.asm
 
 build/task/task.o: src/task/task.c
 	i686-elf-gcc -I $(INCLUDES) src/task $(FLAGS) -c $^ -o $@
+
+build/task/task.asm.o: src/task/task.asm
+	nasm -f elf -g $^ -o $@
 
 build/task/process.o: src/task/process.c
 	i686-elf-gcc -I $(INCLUDES) src/task $(FLAGS) -c $^ -o $@
@@ -128,7 +135,18 @@ runcurses:
 killcurses:
 	pkill qemu
 
-clean:
+debug:
+	qemu-system-i386 -s -S -hda ./bin/disk.img
+
+# Build userland programs
+user_programs:
+	cd ./programs/blank && $(MAKE) all
+
+# Clean userland programs
+user_programs_clean:
+	cd ./programs/blank && $(MAKE) clean
+
+clean: user_programs_clean
 	rm -rf bin/boot.bin
 	rm -rf bin/kernel.bin
 	rm -rf bin/os.bin
@@ -136,5 +154,3 @@ clean:
 	rm -rf bin/disk.img
 	rm -rf ./hello.txt
 	
-
-

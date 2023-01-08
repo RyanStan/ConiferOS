@@ -102,16 +102,47 @@ and instead has kernel/user code and data segments share the entire address spac
 ### Processes and Tasks
 A task is the CPU schedulable unit in ConiferOS.  The task structure is defined in [task.h](src/task/task.h).
 Each task has it's own set of page tables.  All runnable tasks are stored together in a linked list structure.
+A task structure also maintains its hardware context - registers.  When we begin execution of a task, we load
+the values from registers structure into the hardware registers before calling iretd to drop into userland.
 
 A task is owned by a process.  For now, a process only owns one task, but the intent was that a process
 can eventually own multiple process.  The process structure is defined in [process.h](src/task/process.h).
 
-When a user attempts to run an executable, a process will be created which contains reference to that executable (`filename`).
+When a user attempts to load an executable with `process_load`, a process will be created which contains reference to that executable (`filename`).
 For now, only binary executables are supported.  A process, upon initialization, will allocate space for the executable and the stack,
 and will map that memory into the page tables of the task that the process encapsulates.
 
 Eventually, I want to move away from the process abstraction.  The Linux Kernel does not differentiate between processes and threads,
 or processes and tasks, and I do not want to either.
+
+### Userland Functionality
+Currently, you can drop the processor into userland via `process_load` and then a subsequent `task_exec`.  However, there's no
+support for interacting with the kernel from userland and exiting back into kernel code.
+
+To drop into userland, you must first load a process with `process_load`.  This will allocate memory for the executable and stack (see `process_load_data`).
+`process_load` will also create and initialize a `task` structure.  In `task_init` ([task.h](src/task/task.h)), 
+we set the hardware context as follows:
+
+```
+task->registers.ip = TASK_LOAD_VIRTUAL_ADDRESS;
+task->registers.ss = USER_DATA_SEGMENT;
+task->registers.cs = USER_CODE_SEGMENT;
+task->registers.esp = TASK_STACK_VIRT_ADDR;
+```
+
+Then, after `process_load` has initialized the task instance, it will modify the page tables of the task instance to 
+map these addresses to the memory that the process has allocated. See `process_map_task_memory`.
+
+Once the task is ready to execute, `task_exec` will swap the task's page tables into the processor's current execution state
+by modifying the CR3 register, and then will move the task's saved registers' values into the hardware registers, and then
+will call iretd to drop into userland.  This will set the code segment and data segment selector registers to map the user code and user data
+segments.  The values for these segments are defined in [kernel.c](src/kernel.c) (see `/* Set up the GDT */`).
+
+One other interesting thing worth noting.  When we switch to the task's page tables, before we call `iretd`, we can still
+access the correct kernel code memory, because in `task_init`, we do a one to one mapping of physical memory to virtual addresses.
+However, at that point, we can only read the kernel memory, not write it. I would like to see how the Linux Kernel handles this small
+transition gap, from kernel code having swapped the current page tables, to when the user process actually begins executing.
+
 
 ### Build
 TODO: add section on linker script
