@@ -82,3 +82,17 @@ void idt_init()
 	/* Load the interrupt descriptor table */
 	idt_load(&idtr);
 }
+
+void isr80h_handle_command(int command, struct interrupt_frame *frame)
+{
+	
+}
+
+void *isr80h_handler(int command, struct interrupt_frame *frame)
+{
+	swap_kernel_page_tables(); 								// switch to kernel pages 
+	task_current_save_state(frame); 						// save the state of the task that was executing 
+	void *res = isr80h_handle_command(command, frame); 		// TODO: implement
+	swap_curr_task_page_tables(); 							// switch back to the current_task's pages
+	return res;
+}

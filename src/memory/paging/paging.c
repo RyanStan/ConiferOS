@@ -45,10 +45,10 @@ uint32_t* get_pgd(struct paging_desc* paging)
         return paging->pgd;
 }
 
-void paging_switch(uint32_t* pgd)
+void paging_switch(struct paging_desc *paging_desc)
 {
-        paging_load_pgd(pgd);
-        current_pgd = pgd;
+        paging_load_pgd(paging_desc->pgd);
+        current_pgd = paging_desc->pgd;
 }
 
 bool paging_is_aligned(void *addr)

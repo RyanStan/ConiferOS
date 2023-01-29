@@ -2,7 +2,7 @@
 section .asm
 
 global task_enter_userland
-global user_registers
+global set_seg_regs_to_user_data
 
 ; void restore_general_purpose_registers(struct registers *registers)
 ; Load the general purpose registers with their respective values from the passed in registers structure 
@@ -86,7 +86,7 @@ task_enter_userland:
 
     iretd
 
-user_registers:
+set_seg_regs_to_user_data:
     mov ax, 0x23                ; 0x20 is the correct offset into our gdt for the user data segment. 
                                 ; However, the RPL is stored in the low two bits of the segment selector.
                                 ; Hence, by setting segment selectors to 0x23, the RPL will be 3.

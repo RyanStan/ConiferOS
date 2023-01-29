@@ -36,6 +36,7 @@
  */
 #define USER_CODE_SEGMENT           0x1b
 #define USER_DATA_SEGMENT           0x23
+#define KERNEL_DATA_SEGMENT         0x10
 
 #define PROCESS_MAX_ALLOCATIONS     1024                                    /* Max # of memory allocations that a process can make */
 

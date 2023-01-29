@@ -3,6 +3,7 @@
 
 #include "config.h"
 #include "memory/paging/paging.h"
+#include "idt/idt.h"
 
 struct process;
 
@@ -52,7 +53,7 @@ struct task {
 struct task *task_new(struct process *process);
 
 /* Return the currently executing task */
-struct task *task_current();
+struct task *get_current_task();
 
 /* Returns the head task in the task list */
 struct task *get_task_list_head();
@@ -63,10 +64,10 @@ struct task *task_get_next();
 /* Free the memory associated with task from the kernel heap */
 int task_free(struct task *task);
 
-/* Takes us out of current kernel page directory and into current_task page directory
- * TODO: this feels funky to me right now.  But let's wait and see how this is used
+/* Swaps out kernel page tables and swaps in current_task page tables 
+ * It also sets ds, es, fs, gs segment registers to the user data segment.
  */
-int task_page();
+int swap_curr_task_page_tables();
 
 /* Executes the given task.
  * This will switch the current page tables and
@@ -79,6 +80,9 @@ int task_page();
  */
 void task_exec(struct task *task);
 
-
+/* Saves the register values in frame into the current task's registers object.  
+ * This allows us to restore the state of the registers when that task resumes execution.
+ */
+void task_current_save_state(struct interrupt_frame *frame);
 
 #endif
