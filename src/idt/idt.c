@@ -3,10 +3,14 @@
 #include "config.h"
 #include "print/print.h"		// TODO: make some sort of include folder so I don't have to use relative paths in includes
 #include "io/io.h"
+#include "kernel.h"
+#include "task/task.h"
 #include <stdint.h>
 
 #define CONIFEROS_TOTAL_INTERRUPTS 256	
 
+/* Each kernel routine that a user program can invoke via interrupt 0x80 will be stored here */
+static ISR80H_COMMAND isr80h_commands[MAX_ISR80H_COMMANDS];
 
 struct idt_entry {			// idt entry for interreupt gate descriptor
 	uint16_t offset_1; 
@@ -27,6 +31,7 @@ static struct idtr_desc idtr;
 extern void idt_load(struct idtr_desc  *val);
 extern void int21h_entry();
 extern void int_generic_entry();
+extern void isr80h_wrapper();
 
 void int21h_handler()
 {
@@ -75,10 +80,44 @@ void idt_init()
 		idt_set(i, int_generic_entry);
 	}
 	
-
 	idt_set(0, idt_zero);
 	idt_set(0x21, int21h_entry);
+	idt_set(0x80, isr80h_wrapper);
 
 	/* Load the interrupt descriptor table */
 	idt_load(&idtr);
+}
+
+void isr80h_register_command(int command_id, ISR80H_COMMAND command)
+{
+	if (command_id < 0 || command_id >= MAX_ISR80H_COMMANDS)
+		panic("The command_id is out of bounds\n");
+
+	if (isr80h_commands[command_id])
+		panic("You're attempting to overwrite an existing command\n");
+
+	isr80h_commands[command_id] = command;
+}
+
+/* Invokes the system call (ISR80H_COMMAND) that is associated with command and passes it frame */
+void *isr80h_handle_command(int command_id, struct interrupt_frame *frame)
+{
+	if (command_id < 0 || command_id >= MAX_ISR80H_COMMANDS)
+		return 0;
+
+	ISR80H_COMMAND command_func = isr80h_commands[command_id];
+	if (!command_func) 
+		return 0;
+
+	void *result = command_func(frame);
+	return result;
+}
+
+void *isr80h_handler(int command_id, struct interrupt_frame *frame)
+{
+	swap_kernel_page_tables(); 								// switch to kernel pages 
+	task_current_save_state(frame); 						// save the state of the task that was executing 
+	void *res = isr80h_handle_command(command_id, frame);
+	swap_curr_task_page_tables(); 							// switch back to the current_task's pages
+	return res;
 }

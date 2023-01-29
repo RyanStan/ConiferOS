@@ -48,7 +48,7 @@ struct paging_desc* init_page_tables(uint8_t flags);
 uint32_t* get_pgd(struct paging_desc* paging);
 
 /* Load the cr3 register with the address of the page global directory to use */
-void paging_switch(uint32_t* pgd);
+void paging_switch(struct paging_desc *paging_desc);
 
 /* Set the paging bit in the cr0 register 
  * 

@@ -15,13 +15,7 @@
 #include "task/task.h"
 #include "task/process.h"
 #include "config.h"
-
-void panic(const char *msg)
-{
-	print(msg);
-	for(;;) {}
-}
-
+#include "isr80h/isr80h.h"
 
 /* Set up the GDT */
 struct tss tss;
@@ -29,12 +23,29 @@ struct segment_descriptor_raw gdt_raw[TOTAL_GDT_SEGMENTS];
 struct segment_descriptor gdt[TOTAL_GDT_SEGMENTS] = {
 	{.base = 0x00, .limit = 0x00, .type = 0x00},					/* NULL segment - used to load other segment registers */
 	{.base = 0x00, .limit = 0xffffffff, .type = 0x9A},				/* Kernel code segment. 9A = 1001 1010. P = 0. DPL = 0 S=1 E=1 DC=0 RW=1 */
-	{.base = 0x00, .limit = 0xffffffff, .type = 0x92},				/* Kernel data segment. 92 = 1001 0010 DPL=0 RW=1*/
+	{.base = 0x00, .limit = 0xffffffff, .type = 0x92},				/* Kernel data segment. 92 = 1001 0010 DPL=0 RW=1. Offset = Byte 16 (0x10) */
 	{.base = 0x00, .limit = 0xffffffff, .type = 0xF8},				/* User code segment. F8 = 1111 1000 DPL=3 RW=0 */
 	{.base = 0x00, .limit = 0xffffffff, .type = 0xF2},				/* User data segment. F2 = 1111 0010 DPL=3 RW=1. Offset = Byte 32 (0x20) */
 	{.base = (uint32_t)&tss, .limit = sizeof(tss), .type = 0xE9}	/* Task state segment. E9 = 1110 1001 S=0 DPL=3 */
 };
 #define TSS_GDT_INDEX 5
+
+static struct paging_desc *kernel_pages = 0;
+
+void panic(const char *msg)
+{
+	print(msg);
+	for(;;) {}
+}
+
+/* sets ds, es, fs, gs segment registers to the kernel data segment */
+void set_seg_regs_to_kernel_data();
+
+void swap_kernel_page_tables()
+{
+	set_seg_regs_to_kernel_data();
+	paging_switch(kernel_pages);
+}
 
 /* TODO: Create a test file that tests different functionality like paging, the heaps, my file parser, etc... */
 void run_smoke_tests()
@@ -113,9 +124,11 @@ void kernel_main()
 	tss.ss0 = KERNEL_DATA_SELECTOR;
 	tss_load(TSS_GDT_INDEX * sizeof(struct segment_descriptor_raw));
 
-	struct paging_desc *paging = init_page_tables(PAGING_READ_WRITE | PAGING_PRESENT | PAGING_USER_SUPERVISOR);
-	paging_switch(get_pgd(paging));
+	kernel_pages = init_page_tables(PAGING_READ_WRITE | PAGING_PRESENT | PAGING_USER_SUPERVISOR);
+	paging_switch(kernel_pages);
 	enable_paging();
+
+	isr80h_register_commands();
 
 	run_smoke_tests();
 

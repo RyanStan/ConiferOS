@@ -1,12 +1,14 @@
 [BITS 32]		; all code below here is seen as 32-bit code.  The brackets indicate a primitive directive
 global _start
 global  problem
+global set_seg_regs_to_kernel_data
 extern kernel_main
 
 ; should be in text section - must be very first code in our kernelfull object file
 
 CODE_SEG equ 0x08	; these are the offsets into the GDT for the respective segment descriptors
 DATA_SEG equ 0x10
+
 
 _start:
 	mov ax, DATA_SEG	
@@ -38,6 +40,15 @@ _start:
 	
 	call kernel_main
 	jmp $
+
+
+set_seg_regs_to_kernel_data:
+    mov ax, 0x10                ; 0x10 is the offset into our gdt for the kernel data segment (see also KERNEL_DATA_SEGMENT). 
+    mov ds, ax
+    mov es, ax
+    mov fs, ax
+    mov gs, ax
+    ret
 
 
 ; since this assembly file will be in the first section of our final linked executable, we need it to be properly aligned so that the 

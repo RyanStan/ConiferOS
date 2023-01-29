@@ -15,4 +15,9 @@ void kernel_main();
  */
 void panic(const char *msg);
 
+/* Swaps out current task's page tables and swaps in the kernel page tables 
+ * It also sets ds, es, fs, gs segment registers to the kernel data segment.
+ */
+void swap_kernel_page_tables();
+
 #endif /* KERNEL_H */

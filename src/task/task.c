@@ -5,7 +5,6 @@
 #include "memory/memory.h"
 #include "kernel.h"
 
-
 /*  This function is used to enter userland from kernel mode.
  * For each register in registers, it will set the real register with the corresponding value.
  * To do this, we make use of the iretd instruction.  More details are in the comments of the 
@@ -13,12 +12,10 @@
  */
 void task_enter_userland(struct registers *registers);
 
-/* Sets all segment registers to equal the current user data segment register
- * This must be called before switching back into userland.
- * TODO: function name doesn't make sense.  I would rather have a "set segment registers" function
- * Also, we set these registers in the task_return function instead....
+/* Set all the unused segment registers to point at the user data segment. 
+ * This must be called before switching back into userland
  */
-void user_registers();
+void set_seg_regs_to_user_data();
 
 /* The current task that is running */
 struct task *current_task = 0;
@@ -32,7 +29,7 @@ struct task *get_task_list_head()
     return task_list_head;
 }
 
-struct task *task_current()
+struct task *get_current_task()
 {
     return current_task;
 }
@@ -131,19 +128,38 @@ struct task *task_new(struct process *process)
     return task;
 }
 
-/* Takes us out of kernel page directory and into current_task page directory 
- * TODO: we never call this, but it might be used in the future
- */
-int task_page()
+int swap_curr_task_page_tables()
 {
-    user_registers();
-    paging_switch(current_task->paging->pgd);
+    set_seg_regs_to_user_data();
+    paging_switch(current_task->paging);
     return 0;
 }
 
 void task_exec(struct task *task)
 {
     current_task = task;
-    paging_switch(task->paging->pgd);
+    paging_switch(task->paging);
     task_enter_userland(&task->registers);
+}
+
+void task_current_save_state(struct interrupt_frame *frame)
+{
+    // Must be called from kernel land.
+    // save the state of the task that was executing
+    struct task *task = get_current_task();
+    if (!task)
+        panic("task_current_save_state: No current task!\n");
+
+    task->registers.edi = frame->edi;
+    task->registers.esi = frame->esi;
+    task->registers.ebp = frame->ebp;
+    task->registers.ebx = frame->ebx;
+    task->registers.edx = frame->edx;
+    task->registers.ecx = frame->ecx;
+    task->registers.eax = frame->eax;
+    task->registers.ip = frame->ip;
+    task->registers.cs = frame->cs;
+    task->registers.eflags = frame->eflags;
+    task->registers.esp = frame->esp;
+    task->registers.ss = frame->ss;
 }

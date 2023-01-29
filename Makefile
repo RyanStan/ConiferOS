@@ -22,7 +22,8 @@ MODULES = build/kernel.asm.o build/kernel.o \
 	build/fs/fat/fat16.o \
 	build/gdt/gdt.o build/gdt/gdt.asm.o \
 	build/task/tss.asm.o build/task/task.o \
-	build/task/process.o build/task/task.asm.o
+	build/task/process.o build/task/task.asm.o \
+	build/isr80h/isr80h.o build/isr80h/misc.o
 	
 FLAGS = -g -ffreestanding -falign-jumps -falign-functions -falign-labels \
 	-falign-loops -fstrength-reduce -fomit-frame-pointer \
@@ -71,6 +72,12 @@ build/idt/idt.asm.o:  src/idt/idt.asm
 
 build/idt/idt.o: src/idt/idt.c
 	i686-elf-gcc -I $(INCLUDES) src/idt $(FLAGS) -c $^ -o $@
+
+build/isr80h/isr80h.o: src/isr80h/isr80h.c
+	i686-elf-gcc -I $(INCLUDES) src/isr80h $(FLAGS) -c $^ -o $@
+
+build/isr80h/misc.o: src/isr80h/misc.c
+	i686-elf-gcc -I $(INCLUDES) src/isr80h $(FLAGS) -c $^ -o $@
 
 build/gdt/gdt.asm.o:  src/gdt/gdt.asm
 	nasm -f elf -g $^ -o $@

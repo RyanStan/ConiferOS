@@ -46,8 +46,9 @@ These handlers are set in `idt_init` in [idt.c](src/idt/idt.c).
 ### Paging
 From [kernel.c](src/kernel.c):
 ```
-struct paging_desc *paging = init_page_tables(PAGING_READ_WRITE | PAGING_PRESENT | PAGING_USER_SUPERVISOR);
-paging_switch(get_pgd(paging));
+struct paging_desc *kernel_pages = 0;
+kernel_pages = init_page_tables(PAGING_READ_WRITE | PAGING_PRESENT | PAGING_USER_SUPERVISOR);
+paging_switch(kernel_pages);
 enable_paging();
 ```
 
@@ -135,7 +136,7 @@ map these addresses to the memory that the process has allocated. See `process_m
 
 Once the task is ready to execute, `task_exec` will swap the task's page tables into the processor's current execution state
 by modifying the CR3 register, and then will move the task's saved registers' values into the hardware registers, and then
-will call iretd to drop into userland.  This will set the code segment and data segment selector registers to map the user code and user data
+will call `iretd` to drop into userland.  This will set the code segment and data segment selector registers to map the user code and user data
 segments.  The values for these segments are defined in [kernel.c](src/kernel.c) (see `/* Set up the GDT */`).
 
 One other interesting thing worth noting.  When we switch to the task's page tables, before we call `iretd`, we can still
@@ -143,6 +144,16 @@ access the correct kernel code memory, because in `task_init`, we do a one to on
 However, at that point, we can only read the kernel memory, not write it. I would like to see how the Linux Kernel handles this small
 transition gap, from kernel code having swapped the current page tables, to when the user process actually begins executing.
 
+### Userland to Kernel Communication (int 0x80)
+The interrupt 0x80 is used to communicate with the kernel from userland.  The userland program will issue a command value into the eax register,
+and push arguments onto the stack.  Given the command value, the kernel will know which operation system call) to perform.
+
+The ISR that handles 0x80 is `isr80h_wrapper`, which is defined in [idt.asm](src/idt/idt.asm).  The wrapper saves the state of the user program's
+general purpose registers, and then calls `isr80h_handler`.  The definition for this function is in [idt.h](src/idt/idt.h).  This function finishes converting
+the processor into kernel mode by loading the kernel page tables into memory, and then dispatches the appropriate system call, given the command id that
+was passed to the eax register from the userland program.
+
+An interface for kernel code to register systems calls, or kernel commands, is provided by `isr80h_register_command`, which is declared in [idt.h](src/idt/idt.h.  Right now, the only point at which I register system calls is `isr80h_register_commands` in [isr80h.h](src/isr80h/isr80h.h).
 
 ### Build
 TODO: add section on linker script
