@@ -15,7 +15,7 @@ void task_enter_userland(struct registers *registers);
 /* Set all the unused segment registers to point at the user data segment. 
  * This must be called before switching back into userland
  */
-void set_unused_user_segment_registers();
+void set_seg_regs_to_user_data();
 
 /* The current task that is running */
 struct task *current_task = 0;

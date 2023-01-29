@@ -3,6 +3,8 @@
 #include "config.h"
 #include "print/print.h"		// TODO: make some sort of include folder so I don't have to use relative paths in includes
 #include "io/io.h"
+#include "kernel.h"
+#include "task/task.h"
 #include <stdint.h>
 
 #define CONIFEROS_TOTAL_INTERRUPTS 256	
@@ -83,9 +85,9 @@ void idt_init()
 	idt_load(&idtr);
 }
 
-void isr80h_handle_command(int command, struct interrupt_frame *frame)
+void *isr80h_handle_command(int command, struct interrupt_frame *frame)
 {
-	
+	return 0;
 }
 
 void *isr80h_handler(int command, struct interrupt_frame *frame)
