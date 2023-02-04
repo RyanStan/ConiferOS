@@ -6,5 +6,8 @@ section .asm
 global _start
 _start:
 
-label:
-   jmp label
+   ; Call the "sum" kernel command
+   mov eax, 0
+   int 0x80
+
+   jmp $                   ; Infinite loop
