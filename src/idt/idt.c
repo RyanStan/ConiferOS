@@ -90,7 +90,7 @@ void idt_init()
 
 void isr80h_register_command(int command_id, ISR80H_COMMAND command)
 {
-	if (command_id <= 0 || command_id >= MAX_ISR80H_COMMANDS)
+	if (command_id < 0 || command_id >= MAX_ISR80H_COMMANDS)
 		panic("The command_id is out of bounds\n");
 
 	if (isr80h_commands[command_id])
@@ -102,7 +102,7 @@ void isr80h_register_command(int command_id, ISR80H_COMMAND command)
 /* Invokes the system call (ISR80H_COMMAND) that is associated with command and passes it frame */
 void *isr80h_handle_command(int command_id, struct interrupt_frame *frame)
 {
-	if (command_id <= 0 || command_id >= MAX_ISR80H_COMMANDS)
+	if (command_id < 0 || command_id >= MAX_ISR80H_COMMANDS)
 		return 0;
 
 	ISR80H_COMMAND command_func = isr80h_commands[command_id];

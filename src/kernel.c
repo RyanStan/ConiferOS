@@ -15,6 +15,7 @@
 #include "task/task.h"
 #include "task/process.h"
 #include "config.h"
+#include "isr80h/isr80h.h"
 
 /* Set up the GDT */
 struct tss tss;
@@ -126,6 +127,8 @@ void kernel_main()
 	kernel_pages = init_page_tables(PAGING_READ_WRITE | PAGING_PRESENT | PAGING_USER_SUPERVISOR);
 	paging_switch(kernel_pages);
 	enable_paging();
+
+	isr80h_register_commands();
 
 	run_smoke_tests();
 
