@@ -57,7 +57,7 @@ isr80h_wrapper:
 								; we want to save them to the stack because the kernel code needs to use them.
 	; INTERRUPT FRAME END
 
-	; Push the stack pointer so that we are pointint to interrupt frame + general purpose registers
+	; Push the stack pointer so that we are pointing to interrupt frame + general purpose registers
 	push esp
 	push eax					; Push the command the userland passed us to the stack.  This determines the operation the kernel will perform.
 	call isr80h_handler			; This is a C function. C functions put return values in eax.  Thus why we move eax value into tmp_res on next line.

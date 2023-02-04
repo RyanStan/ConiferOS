@@ -42,4 +42,6 @@
 
 #define MAX_PROCESSES               12
 
+#define MAX_ISR80H_COMMANDS         1024
+
 #endif
