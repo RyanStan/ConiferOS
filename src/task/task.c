@@ -3,7 +3,9 @@
 #include "config.h"
 #include "memory/heap/kernel_heap.h"
 #include "memory/memory.h"
+#include "memory/paging/paging.h"
 #include "kernel.h"
+#include "string/string.h"
 
 /*  This function is used to enter userland from kernel mode.
  * For each register in registers, it will set the real register with the corresponding value.
@@ -162,4 +164,50 @@ void task_current_save_state(struct interrupt_frame *frame)
     task->registers.eflags = frame->eflags;
     task->registers.esp = frame->esp;
     task->registers.ss = frame->ss;
+}
+
+int copy_string_from_user_task(struct task *task, void *task_virt_addr, void *kernel_virt_addr, int max)
+{
+    if (max >= PAGING_PAGE_SIZE)
+        return -EINVARG;
+
+    /* Allocate memory that we can share between userland and kernel land.
+     * The kernel can access the memory at address tmp, which is a physical address due to kernel linear page table mapping.
+     * However, we will need to map the physical address tmp into the task's page tables,
+     * so that we have a way to access the same physical memory from task land and kernel land. 
+     */
+    char *tmp = kzalloc(max);
+    if (!tmp)
+        return -ENOMEM;
+
+    uint32_t *task_page_directory = task->paging->pgd;
+
+    /* Get the page table entry in task's page tables that corresponds to tmp.
+     * Since we will be temporarily remapping this page table entry, we will want to replace it
+     * once we're done so that the task does not lose access to the virtual address mapping in case it was being used.
+     */
+    uint32_t old_entry = paging_get_pte(task_page_directory, tmp);
+
+    /* Map the physical address tmp to virtual address tmp within the task's page tables. */
+    paging_map_range(task->paging, tmp, tmp, 1, PAGING_READ_WRITE | PAGING_PRESENT | PAGING_USER_SUPERVISOR);
+    
+    /* Switch to the task's page tables.
+     * Now, we can access the value at task_virt_addr.
+     */
+    paging_switch(task->paging);
+
+    /* Copy the string at task_virt_addr to tmp. */
+    strncpy(tmp, task_virt_addr, max);
+
+    /* Switch back to kernel page tables */
+    swap_kernel_page_tables();
+
+    /* Restore task's page tables so that it can see whatever was at tmp before we overwrote it */
+    if (paging_set(task_page_directory, tmp, old_entry) < 0) {
+        kfree(tmp);
+        return -EIO;
+    }
+
+    strncpy(kernel_virt_addr, tmp, max);
+    return 0;
 }

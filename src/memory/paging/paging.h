@@ -86,4 +86,9 @@ int paging_create_mapping(struct paging_desc *paging_desc, void *virt_addr, void
 /* Rounds addr up so that it is page aligned */
 void *paging_align_address(void *addr);
 
+/* Given a set of page tables rooted at task_page_directory,
+ * returns the page table entry corresponding to the virtual address virt_addr.
+ */
+uint32_t paging_get_pte(uint32_t *task_page_directory, void *virt_addr);
+
 #endif

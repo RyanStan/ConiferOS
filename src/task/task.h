@@ -85,4 +85,20 @@ void task_exec(struct task *task);
  */
 void task_current_save_state(struct interrupt_frame *frame);
 
+/* Copy a string from userland (task's address space) to the kernel's address space.
+ * This function must be called from kernel land.
+ * This function relies on the fact that the kernel page table's linearly map the whole physical address space.
+ *
+ *  task_virt_addr - A userland virtual address that is mapped to some value via task's page tables.  
+ *                   Kernel mode code cannot directly see the value at this address since it is mapped to a physical address
+ *                   by task's page tables, and not the kernel's page tables.
+ * 
+ *  kernel_virt_addr - Kernel virtual address (mapped by kernel page tables).  We map the userland value at task_virt_addr
+ *                     into kernel_virt_addr so that the kernel can access the value.
+ * 
+ *   max - The maximum length of the string that we are copying from userland to kernel land.
+ *
+ */
+int copy_string_from_user_task(struct task *task, void *task_virt_addr, void *kernel_virt_addr, int max);
+
 #endif

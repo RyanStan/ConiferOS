@@ -142,3 +142,17 @@ void *paging_align_address(void *addr)
 
     return (void*)((uint32_t)addr + PAGING_PAGE_SIZE - ((uint32_t)addr % PAGING_PAGE_SIZE));
 }
+
+uint32_t paging_get_pte(uint32_t *task_page_directory, void *virt_addr)
+{
+        uint32_t directory_index = 0;
+        uint32_t table_index = 0;
+        int rc = paging_get_indexes(virt_addr, &directory_index, &table_index);
+        if (rc < 0) {
+                return rc;
+        }
+
+        uint32_t page_directory_entry = task_page_directory[directory_index];
+        uint32_t *page_table = (uint32_t*)(page_directory_entry & PGD_ENTRY_TABLE_ADDR);
+        return page_table[table_index];
+}
