@@ -64,10 +64,15 @@ struct task *task_get_next();
 /* Free the memory associated with task from the kernel heap */
 int task_free(struct task *task);
 
-/* Swaps out kernel page tables and swaps in current_task page tables 
- * It also sets ds, es, fs, gs segment registers to the user data segment.
+/* Swaps out kernel page tables and swaps in current_task page tables.
+ * Also set ds, es, fs, gs segment registers to the user data segment.
  */
 int swap_curr_task_page_tables();
+
+/* Swaps out kernel page tables and swaps in task's page tables.
+ * Also set ds, es, fs, gs segment registers to the user data segment.
+ */
+int swap_task_page_tables(struct task *task);
 
 /* Executes the given task.
  * This will switch the current page tables and
@@ -100,5 +105,14 @@ void task_current_save_state(struct interrupt_frame *frame);
  *
  */
 int copy_string_from_user_task(struct task *task, void *task_virt_addr, void *kernel_virt_addr, int max);
+
+/* Retrieve items from the task's stack.  
+ * This function switches into the task's page tables,
+ * pulls the stack item at index using the task's saved esp register value,
+ * and then swaps back in the kernel's page tables.
+ * The value is returned as a void* type, because the value will be
+ * 4 bytes but we won't know it's type.
+ */
+void *task_get_stack_item(struct task *task, int index);
 
 #endif

@@ -31,7 +31,9 @@ FLAGS = -g -ffreestanding -falign-jumps -falign-functions -falign-labels \
 	-Werror -Wno-unused-label -Wno-cpp -Wno-unused-parameter \
 	-nostdlib -nostartfiles -nodefaultlibs -Wall -O0 -Iinc
 
-all: bin/disk.img user_programs
+USER_PROG_1 = test_sum_syscall
+
+all: user_programs bin/disk.img
 
 bin/disk.img: bin/os.bin
 	cp bin/os.bin bin/disk.img
@@ -40,7 +42,7 @@ bin/disk.img: bin/os.bin
 	sudo mount -t vfat bin/disk.img /mnt/d
 	echo "Hello World" > ./hello.txt
 	sudo cp ./hello.txt /mnt/d
-	sudo cp ./programs/blank/blank.bin /mnt/d
+	sudo cp ./programs/$(USER_PROG_1)/$(USER_PROG_1).bin /mnt/d
 	sudo umount /mnt/d
 
 # os.bin is a concatenation of the boot binary and the kernel binary.
@@ -133,26 +135,33 @@ build/fs/fat/fat16.o: src/fs/fat/fat16.c
 build/disk/disk_stream.o: src/disk/disk_stream.c
 	i686-elf-gcc -I $(INCLUDES) src/disk $(FLAGS) -c $^ -o $@
 
+.PHONY: run
 run:
 	qemu-system-i386 -drive file=bin/disk.img,index=0,media=disk,format=raw
 
+.PHONY: runcurses
 runcurses:
 	qemu-system-i386 -drive file=bin/disk.img,index=0,media=disk,format=raw -curses
 
+.PHONY: killcurses
 killcurses:
 	pkill qemu
 
+.PHONY: debug
 debug:
 	qemu-system-i386 -s -S -hda ./bin/disk.img
 
 # Build userland programs
+.PHONY: user_programs
 user_programs:
-	cd ./programs/blank && $(MAKE) all
+	cd ./programs/$(USER_PROG_1) && $(MAKE) all
 
 # Clean userland programs
+.PHONY: user_programs_clean
 user_programs_clean:
-	cd ./programs/blank && $(MAKE) clean
+	cd ./programs/$(USER_PROG_1) && $(MAKE) clean
 
+.PHONY: clean
 clean: user_programs_clean
 	rm -rf bin/boot.bin
 	rm -rf bin/kernel.bin

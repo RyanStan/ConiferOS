@@ -137,6 +137,13 @@ int swap_curr_task_page_tables()
     return 0;
 }
 
+int swap_task_page_tables(struct task *task)
+{
+    set_seg_regs_to_user_data();
+    paging_switch(task->paging);
+    return 0;
+}
+
 void task_exec(struct task *task)
 {
     current_task = task;
@@ -210,4 +217,25 @@ int copy_string_from_user_task(struct task *task, void *task_virt_addr, void *ke
 
     strncpy(kernel_virt_addr, tmp, max);
     return 0;
+}
+
+void *task_get_stack_item(struct task *task, int index)
+{
+    if (index < 0)
+        panic("task_get_stack_item: index must be >= 0.\n");
+
+    uint32_t *task_esp = (uint32_t*)task->registers.esp;
+
+    /* Switch to the task's page tables.
+     * We need to do this so that we can access the items
+     * on the task's stack.
+     */
+    swap_task_page_tables(task);
+
+    void *task_stack_item = (void*) task_esp[index];
+
+    // Swap back in the kernel's page tables
+    swap_kernel_page_tables();
+
+    return task_stack_item;
 }
