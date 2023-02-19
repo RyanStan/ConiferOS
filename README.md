@@ -153,7 +153,11 @@ general purpose registers, and then calls `isr80h_handler`.  The definition for 
 the processor into kernel mode by loading the kernel page tables into memory, and then dispatches the appropriate system call, given the command id that
 was passed to the eax register from the userland program.
 
-An interface for kernel code to register systems calls, or kernel commands, is provided by `isr80h_register_command`, which is declared in [idt.h](src/idt/idt.h.  Right now, the only point at which I register system calls is `isr80h_register_commands` in [isr80h.h](src/isr80h/isr80h.h).
+An interface for kernel code to register systems calls, or kernel commands, is provided by `isr80h_register_command`, which is declared in [idt.h](src/idt/idt.h).  Right now, the only point at which I register system calls is `isr80h_register_commands` in [isr80h.h](src/isr80h/isr80h.h).
+
+### User Programs
+User programs are stored in the [programs](./programs/) folder.  The program [test_sum_syscall](./programs/test_sum_syscall/) tests the SUM syscall/ kernel command. 
+
 
 ### Build
 TODO: add section on linker script
