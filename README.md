@@ -92,7 +92,9 @@ disk against a given filesystem.  Thus, each filesystem must implement this `res
 a filesystem implementation to a given disk.
 
 ### FAT Filesystem
-The FAT filesystem is the only filesystem I've implemented so far.  See [fat16.h](src/fs/fat/fat16.h).
+The FAT filesystem is the only filesystem I've implemented so far.  See [fat16.h](src/fs/fat/fat16.h).  
+One very important thing to keep in mind with FAT16: Filename lengths have a strict limit: 8 characters for everything
+before the `.`, and 3 characters for the extension.  Forgetting this fact has caused me lots of pain numerous times.
 
 ### GDT
 The GDT is loaded into memory and initially configured with Code and Data segments in [boot.asm](src/boot/boot.asm).
