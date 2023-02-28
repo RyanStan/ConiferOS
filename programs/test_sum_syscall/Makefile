@@ -1,5 +1,5 @@
 FLAGS = -g -ffreestanding -nostdlib -O0 -fpic
-PROG = test_sum_syscall
+PROG = sum
 
 all:
 	nasm -f elf ./$(PROG).asm -o ./build/$(PROG).o

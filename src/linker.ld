@@ -10,6 +10,11 @@ SECTIONS
 		*(.text)			/* all .text input sections from input files should be put into this output section */	
 	}
 
+	.asm : ALIGN(4096)		/* To not interfere with the text section (compiled c code) alignment, we'll stick our assembly into its own section  */
+	{			
+		*(.asm)
+	}
+
 	.rodata : ALIGN(4096)
 	{
 		*(.rodata)
@@ -24,10 +29,5 @@ SECTIONS
 	{
 		*(COMMON)
 		*(.bss)
-	}
-
-	.asm : ALIGN(4096)		/* To not interfere with the text section (compiled c code) alignment, we'll stick our assembly into its own section  */
-	{			
-		*(.asm)
 	}
 }
