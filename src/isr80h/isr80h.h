@@ -4,7 +4,8 @@
 /* This will be used to associate syscalls with an integer (command_id) */
 enum SystemCalls
 {
-    SYSTEM_COMMAND_0_SUM
+    SYSTEM_COMMAND_0_SUM,
+    SYSTEM_COMMAND_1_PRINT,
 };
 
 /* Registers all kernel commands that are defined in isr80h/misc */

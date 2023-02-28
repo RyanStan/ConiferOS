@@ -157,8 +157,10 @@ was passed to the eax register from the userland program.
 
 An interface for kernel code to register systems calls, or kernel commands, is provided by `isr80h_register_command`, which is declared in [idt.h](src/idt/idt.h).  Right now, the only point at which I register system calls is `isr80h_register_commands` in [isr80h.h](src/isr80h/isr80h.h).
 
+Misc. kernel commands are stored in [`src/isr80h/misc.h`](./src/isr80h/io.h), and IO related kernel commands are stored in [`src/isr80h/io.h`](./src/isr80h/io.h).
+
 ### User Programs
-User programs are stored in the [programs](./programs/) folder.  The program [test_sum_syscall](./programs/test_sum_syscall/) tests the SUM syscall/ kernel command. 
+User programs are stored in the [programs](./programs/) folder.  The program `sum_sys`[programs/test_sum_sycall](./programs/test_sum_syscall/) tests the SUM syscall/ kernel command. The program `print_sys` in [programs/test_print_syscall/](./programs/print/) tests the PRINT syscall/ kernel command.
 
 
 ### Build

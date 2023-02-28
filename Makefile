@@ -23,7 +23,8 @@ MODULES = build/kernel.asm.o build/kernel.o \
 	build/gdt/gdt.o build/gdt/gdt.asm.o \
 	build/task/tss.asm.o build/task/task.o \
 	build/task/process.o build/task/task.asm.o \
-	build/isr80h/isr80h.o build/isr80h/misc.o
+	build/isr80h/isr80h.o build/isr80h/misc.o \
+	build/isr80h/io.o
 	
 FLAGS = -g -ffreestanding -falign-jumps -falign-functions -falign-labels \
 	-falign-loops -fstrength-reduce -fomit-frame-pointer \
@@ -31,7 +32,10 @@ FLAGS = -g -ffreestanding -falign-jumps -falign-functions -falign-labels \
 	-Werror -Wno-unused-label -Wno-cpp -Wno-unused-parameter \
 	-nostdlib -nostartfiles -nodefaultlibs -Wall -O0 -Iinc
 
-USER_PROG_1 = test_sum_syscall
+USER_PROG_1_FOLDER = test_sum_syscall
+USER_PROG_1 = sum
+USER_PROG_2_FOLDER = test_print_syscall
+USER_PROG_2 = print
 
 all: user_programs bin/disk.img
 
@@ -42,7 +46,8 @@ bin/disk.img: bin/os.bin
 	sudo mount -t vfat bin/disk.img /mnt/d
 	echo "Hello World" > ./hello.txt
 	sudo cp ./hello.txt /mnt/d
-	sudo cp ./programs/$(USER_PROG_1)/$(USER_PROG_1).bin /mnt/d
+	sudo cp ./programs/$(USER_PROG_1_FOLDER)/$(USER_PROG_1).bin /mnt/d
+	sudo cp ./programs/$(USER_PROG_2_FOLDER)/$(USER_PROG_2).bin /mnt/d
 	sudo umount /mnt/d
 
 # os.bin is a concatenation of the boot binary and the kernel binary.
@@ -79,6 +84,9 @@ build/isr80h/isr80h.o: src/isr80h/isr80h.c
 	i686-elf-gcc -I $(INCLUDES) src/isr80h $(FLAGS) -c $^ -o $@
 
 build/isr80h/misc.o: src/isr80h/misc.c
+	i686-elf-gcc -I $(INCLUDES) src/isr80h $(FLAGS) -c $^ -o $@
+
+build/isr80h/io.o: src/isr80h/io.c
 	i686-elf-gcc -I $(INCLUDES) src/isr80h $(FLAGS) -c $^ -o $@
 
 build/gdt/gdt.asm.o:  src/gdt/gdt.asm
@@ -154,12 +162,14 @@ debug:
 # Build userland programs
 .PHONY: user_programs
 user_programs:
-	cd ./programs/$(USER_PROG_1) && $(MAKE) all
+	cd ./programs/$(USER_PROG_1_FOLDER) && $(MAKE) all
+	cd ./programs/$(USER_PROG_2_FOLDER) && $(MAKE) all
 
 # Clean userland programs
 .PHONY: user_programs_clean
 user_programs_clean:
-	cd ./programs/$(USER_PROG_1) && $(MAKE) clean
+	cd ./programs/$(USER_PROG_1_FOLDER) && $(MAKE) clean
+	cd ./programs/$(USER_PROG_2_FOLDER) && $(MAKE) clean
 
 .PHONY: clean
 clean: user_programs_clean
