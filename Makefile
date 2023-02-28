@@ -159,6 +159,10 @@ killcurses:
 debug:
 	qemu-system-i386 -s -S -hda ./bin/disk.img
 
+.PHONY: run_no_restart
+run_no_restart:
+	qemu-system-i386 --no-reboot -d int --no-shutdown -drive file=bin/disk.img,index=0,media=disk,format=raw
+
 # Build userland programs
 .PHONY: user_programs
 user_programs:
