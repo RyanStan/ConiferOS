@@ -6,6 +6,7 @@
 #include "memory/paging/paging.h"
 #include "kernel.h"
 #include "string/string.h"
+#include "task/process.h"
 
 /*  This function is used to enter userland from kernel mode.
  * For each register in registers, it will set the real register with the corresponding value.
@@ -147,6 +148,7 @@ int swap_task_page_tables(struct task *task)
 void task_exec(struct task *task)
 {
     current_task = task;
+    set_current_process(task->process);
     paging_switch(task->paging);
     task_enter_userland(&task->registers);
 }

@@ -37,11 +37,39 @@ Once the kernel is in memory, the first function to execute is
 which is in [kernel.c](src/kernel.c).  
 
 ### Interupts
-The hardware emulated by QEMU provides a traditional PIC.  
+The hardware emulated by QEMU provides two i8259 PIC devices. The following is a snippet of output from `info pic`
+of the QEMU monitor:
+```
+    /device[4] (isa-i8259)
+      /elcr[0] (memory-region)
+      /pic[0] (memory-region)
+      /unnamed-gpio-in[0] (irq)
+      /unnamed-gpio-in[1] (irq)
+      /unnamed-gpio-in[2] (irq)
+      /unnamed-gpio-in[3] (irq)
+      /unnamed-gpio-in[4] (irq)
+      /unnamed-gpio-in[5] (irq)
+      /unnamed-gpio-in[6] (irq)
+      /unnamed-gpio-in[7] (irq)
+    /device[5] (isa-i8259)
+      /elcr[0] (memory-region)
+      /pic[0] (memory-region)
+      /unnamed-gpio-in[0] (irq)
+      /unnamed-gpio-in[1] (irq)
+      /unnamed-gpio-in[2] (irq)
+      /unnamed-gpio-in[3] (irq)
+      /unnamed-gpio-in[4] (irq)
+      /unnamed-gpio-in[5] (irq)
+      /unnamed-gpio-in[6] (irq)
+      /unnamed-gpio-in[7] (irq)
+
+```
 An interface to configure the interrupt descriptor table is provided by 
 [idt.h](src/idt/idt.h). In [kernel.c](src/kernel.c), I initialize the idt with `idt_init()`.
 Currently, there's an interrupt handler for int 0x00 and int 0x21 (keyboard interrupt).
 These handlers are set in `idt_init` in [idt.c](src/idt/idt.c). 
+
+In kernel.asm, I've reinitialized the 8259 master PIC to map IRQs to IDT entries starting at 0x20. This is because the processor has already reserved earlier IDT entries for CPU exceptions.  For example, now, if the 8259 has IRQ 0 raised, it will call the entry at index 0x20 in our IDT.
 
 ### Paging
 From [kernel.c](src/kernel.c):
@@ -161,6 +189,14 @@ Misc. kernel commands are stored in [`src/isr80h/misc.h`](./src/isr80h/io.h), an
 
 ### User Programs
 User programs are stored in the [programs](./programs/) folder.  The program `sum_sys`[programs/test_sum_sycall](./programs/test_sum_syscall/) tests the SUM syscall/ kernel command. The program `print_sys` in [programs/test_print_syscall/](./programs/print/) tests the PRINT syscall/ kernel command.
+
+### Virtual Keyboard Layer
+Each process structure has a keyboard_buffer, which is defined in [process.h](src/task/process.h). An interface for interacting with a process's keyboard
+buffer is defined in [keyboard.h](src/keyboard/keyboard.h). The `keyboard_push` function will push a character to the keyboard buffer of the current process,
+while `keyboard_pop` pops a character from the current task's process's keyboard buffer.
+
+### PS/2 Keyboard Layer
+This is in the works. IRQ 1 is typically raised by a keyboard device. We've mapped IRQ 1 to IDT entry 0x21.
 
 
 ### Build

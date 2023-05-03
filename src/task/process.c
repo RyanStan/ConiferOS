@@ -196,3 +196,13 @@ int process_load(const char *filename, struct process **process)
 
     return process_load_for_slot(filename, process, pid);
 }
+
+void set_current_process(struct process *process)
+{
+    /* Since state is saved at the task-level
+     * and this process_switch function is only called from kernel-land, 
+     * there isn't any state for us to save here.
+     */
+
+    current_process = process;
+}

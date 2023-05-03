@@ -27,7 +27,7 @@ _start:
 	or al, 2		; in reads from a port and out writes to a port (actually writes to IO address space I believe - specific port is a feature of the chipset)
 	out 0x92, al
 
-	; Remap the master PIC (Assuming that QEMU is emulating a 8259 PIC for us as opposed to a more modern I/O and local APICs)
+	; Remap the master PIC to IDT entries starting at 0x20. This is because the processor has already reserved earlier IDT entries for CPU exceptions.
 	mov al, 00010001b	
 	out 0x20, al		; send 10001b (initialization mode command) to I/O port 0x20 which is Master PIC - Command
 
