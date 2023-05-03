@@ -4,6 +4,7 @@
 #include <stdint.h>
 #include "task/task.h"
 #include "config.h"
+#include "keyboard/keyboard.h"
 
 enum executable_format {
         BINARY,
@@ -56,6 +57,21 @@ struct process {
     uint32_t size;
 
     enum executable_format format;
+
+    // TODO: I'm not entirely sure yet why the keyboard is tied to a process and not a task. Odd decision.
+    // Well, in general, having this process struct in addition to tasks is odd.
+    // Circular buffer
+    struct keyboard_buffer
+    {
+        char buffer[KEYBOARD_BUFFER_SIZE];
+
+        /* Head and tail must always be within the bounds of the buffer.
+        * They should be updated by using their respective increment methods.
+        * tail advances on write and head advances on read.
+        */
+        int head;
+        int tail;
+    } keyboard_buffer;
 };
  
 /* Loads the executable given by filename into memory, and generates a process
@@ -65,5 +81,12 @@ struct process {
  * tasks will also be ready to execute via task_exec (see task.h).
  */
 int process_load(const char *filename, struct process **process);
+
+/* Returns the process that is currently executing */
+struct process *get_current_process();
+
+/* Set the process that is currently executing.*/
+void set_current_process(struct process *process);
+
 
 #endif

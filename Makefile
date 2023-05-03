@@ -24,7 +24,7 @@ MODULES = build/kernel.asm.o build/kernel.o \
 	build/task/tss.asm.o build/task/task.o \
 	build/task/process.o build/task/task.asm.o \
 	build/isr80h/isr80h.o build/isr80h/misc.o \
-	build/isr80h/io.o
+	build/isr80h/io.o build/keyboard/keyboard.o
 	
 FLAGS = -g -ffreestanding -falign-jumps -falign-functions -falign-labels \
 	-falign-loops -fstrength-reduce -fomit-frame-pointer \
@@ -142,6 +142,10 @@ build/fs/fat/fat16.o: src/fs/fat/fat16.c
 
 build/disk/disk_stream.o: src/disk/disk_stream.c
 	i686-elf-gcc -I $(INCLUDES) src/disk $(FLAGS) -c $^ -o $@
+
+build/keyboard/keyboard.o: src/keyboard/keyboard.c
+	i686-elf-gcc -I $(INCLUDES) src/keyboard $(FLAGS) -c $^ -o $@
+
 
 .PHONY: run
 run:
