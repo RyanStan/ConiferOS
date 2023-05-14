@@ -4,14 +4,15 @@
 #include "task/process.h"
 #include "task/task.h"
 #include "print/print.h"
+#include "keyboard/ps2_keyboard.h"
 
 static struct keyboard *keyboard_list_head = 0;
 static struct keyboard *keyboard_list_last = 0;
 
-// In the future, this will initialize keyboard drivers
+
 void keyboard_init()
 {
-
+    keyboard_insert(ps2_init());
 }
 
 int keyboard_insert(struct keyboard *keyboard)

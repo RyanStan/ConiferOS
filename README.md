@@ -37,7 +37,7 @@ Once the kernel is in memory, the first function to execute is
 which is in [kernel.c](src/kernel.c).  
 
 ### Interupts
-The hardware emulated by QEMU provides two i8259 PIC devices. The following is a snippet of output from `info pic`
+The hardware emulated by QEMU provides two i8259 PIC devices. The following is a snippet of output from `info qom-tree`
 of the QEMU monitor:
 ```
     /device[4] (isa-i8259)
@@ -191,12 +191,48 @@ Misc. kernel commands are stored in [`src/isr80h/misc.h`](./src/isr80h/io.h), an
 User programs are stored in the [programs](./programs/) folder.  The program `sum_sys`[programs/test_sum_sycall](./programs/test_sum_syscall/) tests the SUM syscall/ kernel command. The program `print_sys` in [programs/test_print_syscall/](./programs/print/) tests the PRINT syscall/ kernel command.
 
 ### Virtual Keyboard Layer
-Each process structure has a keyboard_buffer, which is defined in [process.h](src/task/process.h). An interface for interacting with a process's keyboard
+Each process structure has a `keyboard_buffer`, which is defined in [process.h](src/task/process.h). An interface for interacting with a process's keyboard
 buffer is defined in [keyboard.h](src/keyboard/keyboard.h). The `keyboard_push` function will push a character to the keyboard buffer of the current process,
 while `keyboard_pop` pops a character from the current task's process's keyboard buffer.
 
-### PS/2 Keyboard Layer
-This is in the works. IRQ 1 is typically raised by a keyboard device. We've mapped IRQ 1 to IDT entry 0x21.
+### PS/2 Keyboard
+Qemu emulates an Intel 8042 chip, which is the PS/2 Controller. For more info on this chip, see ["'8042' PS/2 Controller" on OSDev](https://wiki.osdev.org/%228042%22_PS/2_Controller). This is the chip that controls communication between the PS/2 Keyboard and the CPU.
+If you open the qemu monitor and run `info qtree`, you'll notice that attached to the PCI bus is an ISA bridge
+which supports legacy ISA devices by translating PCI I/O and PCI Memory space accesses into ISA I/O and ISA Memory accesses. Then, attached to the ISA bus,
+is the i8042 device, which is our Intel 8042 chip. 
+```
+dev: PIIX3, id ""
+        addr = 01.0
+        romfile = ""
+        romsize = 4294967295 (0xffffffff)
+        rombar = 1 (0x1)
+        multifunction = true
+        x-pcie-lnksta-dllla = true
+        x-pcie-extcap-init = true
+        failover_pair_id = ""
+        acpi-index = 0 (0x0)
+        class ISA bridge, addr 00:01.0, pci id 8086:7000 (sub 1af4:1100)
+        bus: isa.0
+          type ISA
+          dev: port92, id ""
+            gpio-out "a20" 1
+          dev: vmmouse, id ""
+          dev: vmport, id ""
+            x-read-set-eax = true
+            x-signal-unsupported-cmd = true
+            x-report-vmx-type = true
+            x-cmds-v2 = true
+            vmware-vmx-version = 6 (0x6)
+            vmware-vmx-type = 2 (0x2)
+          dev: i8042, id ""
+            gpio-out "a20" 1
+            extended-state = true
+            kbd-throttle = false
+            isa irqs 1,12
+
+```
+
+The PS/2 driver is in the works. IRQ 1 is typically raised by a keyboard device. We've mapped IRQ 1 to IDT entry 0x21.
 
 
 ### Build

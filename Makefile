@@ -24,7 +24,7 @@ MODULES = build/kernel.asm.o build/kernel.o \
 	build/task/tss.asm.o build/task/task.o \
 	build/task/process.o build/task/task.asm.o \
 	build/isr80h/isr80h.o build/isr80h/misc.o \
-	build/isr80h/io.o build/keyboard/keyboard.o
+	build/isr80h/io.o build/keyboard/keyboard.o build/keyboard/ps2_keyboard.o
 	
 FLAGS = -g -ffreestanding -falign-jumps -falign-functions -falign-labels \
 	-falign-loops -fstrength-reduce -fomit-frame-pointer \
@@ -110,7 +110,7 @@ build/task/task.asm.o: src/task/task.asm
 build/task/process.o: src/task/process.c
 	i686-elf-gcc -I $(INCLUDES) src/task $(FLAGS) -c $^ -o $@
 
-build/task/tss.asm.o:  src/task/tss.asm
+build/task/tss.asm.o:  src/task/tss.asmbuild/keyboard/ps2.o
 	nasm -f elf -g $^ -o $@
 
 build/memory/heap/heap.o: src/memory/heap/heap.c
@@ -144,6 +144,9 @@ build/disk/disk_stream.o: src/disk/disk_stream.c
 	i686-elf-gcc -I $(INCLUDES) src/disk $(FLAGS) -c $^ -o $@
 
 build/keyboard/keyboard.o: src/keyboard/keyboard.c
+	i686-elf-gcc -I $(INCLUDES) src/keyboard $(FLAGS) -c $^ -o $@
+
+build/keyboard/ps2_keyboard.o: src/keyboard/ps2_keyboard.c
 	i686-elf-gcc -I $(INCLUDES) src/keyboard $(FLAGS) -c $^ -o $@
 
 

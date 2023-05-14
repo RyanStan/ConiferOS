@@ -24,7 +24,7 @@ void keyboard_push(char c);
 // Pop a character from the current task's process's keyboard buffer
 char keyboard_pop();
 
-// In the future, this will initialize keyboard drivers.
+// Register keyboard drivers
 void keyboard_init();
 
 #endif
