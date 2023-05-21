@@ -65,11 +65,12 @@ of the QEMU monitor:
 
 ```
 An interface to configure the interrupt descriptor table is provided by 
-[idt.h](src/idt/idt.h). In [kernel.c](src/kernel.c), I initialize the idt with `idt_init()`.
-Currently, there's an interrupt handler for int 0x00 and int 0x21 (keyboard interrupt).
-These handlers are set in `idt_init` in [idt.c](src/idt/idt.c). 
+[idt.h](src/idt/idt.h). In [kernel.c](src/kernel.c), I initialize the idt and load the idtr with `idt_init()`.
 
-In kernel.asm, I've reinitialized the 8259 master PIC to map IRQs to IDT entries starting at 0x20. This is because the processor has already reserved earlier IDT entries for CPU exceptions.  For example, now, if the 8259 has IRQ 0 raised, it will call the entry at index 0x20 in our IDT.
+Interrupt handlers can be dynamically registered with the `idt_register_interrupt_handler` function in [idt.h](src/idt/idt.h). 
+The `interrupt_handler` function is responsible for calling the registered interrupt handler for the raised interrupt.
+
+In [kernel.asm](src/kernel.asm), I've reinitialized the 8259 master PIC to map IRQs to IDT entries starting at 0x20. This is because the processor has already reserved earlier IDT entries for CPU exceptions.  For example, now, if the 8259 has IRQ 0 raised, it will call the entry at index 0x20 in our IDT.
 
 ### Paging
 From [kernel.c](src/kernel.c):

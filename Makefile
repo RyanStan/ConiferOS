@@ -110,7 +110,7 @@ build/task/task.asm.o: src/task/task.asm
 build/task/process.o: src/task/process.c
 	i686-elf-gcc -I $(INCLUDES) src/task $(FLAGS) -c $^ -o $@
 
-build/task/tss.asm.o:  src/task/tss.asmbuild/keyboard/ps2.o
+build/task/tss.asm.o:  src/task/tss.asm
 	nasm -f elf -g $^ -o $@
 
 build/memory/heap/heap.o: src/memory/heap/heap.c

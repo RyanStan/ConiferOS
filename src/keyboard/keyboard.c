@@ -9,12 +9,6 @@
 static struct keyboard *keyboard_list_head = 0;
 static struct keyboard *keyboard_list_last = 0;
 
-
-void keyboard_init()
-{
-    keyboard_insert(ps2_init());
-}
-
 int keyboard_insert(struct keyboard *keyboard)
 {
     if (!keyboard->init) {
@@ -31,6 +25,11 @@ int keyboard_insert(struct keyboard *keyboard)
     }
 
     return keyboard->init();
+}
+
+void keyboard_init()
+{
+    keyboard_insert(ps2_init());
 }
 
 // Increment the tail of the circular buffer. Ensures that it stays within the bounds of the buffer array.

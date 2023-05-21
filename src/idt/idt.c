@@ -6,11 +6,20 @@
 #include "kernel.h"
 #include "task/task.h"
 #include <stdint.h>
+#include "status.h"
 
-#define CONIFEROS_TOTAL_INTERRUPTS 256	
+#define CONIFEROS_TOTAL_INTERRUPTS 512	
 
 /* Each kernel routine that a user program can invoke via interrupt 0x80 will be stored here */
 static ISR80H_COMMAND isr80h_commands[MAX_ISR80H_COMMANDS];
+
+// TODO: add comment
+static INTERRUPT_HANDLER interrupt_handlers[CONIFEROS_TOTAL_INTERRUPTS];
+
+// An array of pointers is defined in idt.asm. The array will contain the addresses
+// of the assembly functions which handle the corresponding interrupt number.
+// Example: index 5 of this array will contain the interrupt handler for interrupt #5.
+extern void *interrupt_pointer_table[CONIFEROS_TOTAL_INTERRUPTS];
 
 struct idt_entry {			// idt entry for interreupt gate descriptor
 	uint16_t offset_1; 
@@ -29,20 +38,7 @@ static struct idt_entry idt[CONIFEROS_TOTAL_INTERRUPTS];
 static struct idtr_desc idtr;
 
 extern void idt_load(struct idtr_desc  *val);
-extern void int21h_entry();
-extern void int_generic_entry();
 extern void isr80h_wrapper();
-
-void int21h_handler()
-{
-	print("Keyboard pressed\n");
-	outb(0x20, 0x20);		// send PIC an acknowledgment
-}
-
-void int_generic_handler()
-{
-	outb(0x20, 0x20);		// send PIC an acknowledgment
-}
 
 /* 
  * idt_zero - handler for interrupt 0
@@ -77,11 +73,11 @@ void idt_init()
 
 	/* Set interrupt vectors to generic handler */
 	for (int i = 0; i < CONIFEROS_TOTAL_INTERRUPTS; i++) {
-		idt_set(i, int_generic_entry);
+		idt_set(i, interrupt_pointer_table[i]);
 	}
 	
+	// Overwrite handler for the interrupts which require special handling
 	idt_set(0, idt_zero);
-	idt_set(0x21, int21h_entry);
 	idt_set(0x80, isr80h_wrapper);
 
 	/* Load the interrupt descriptor table */
@@ -120,4 +116,25 @@ void *isr80h_handler(int command_id, struct interrupt_frame *frame)
 	void *res = isr80h_handle_command(command_id, frame);
 	swap_curr_task_page_tables(); 							// switch back to the current_task's pages
 	return res;
+}
+
+// Generic interrupt handler. Calls the appropriate interrupt handler for the interrupt # sent to us from the PIC.
+void interrupt_handler(int interrupt, struct interrupt_frame *frame)
+{
+	swap_kernel_page_tables(); 								// switch to kernel pages
+	if (interrupt_handlers[interrupt] != 0) {
+		task_current_save_state(frame); 					// save the state of the task that was executing
+		interrupt_handlers[interrupt](frame);
+	}
+	swap_curr_task_page_tables(); 							// switch back to the current_task's pages
+	outb(0x20, 0x20);										// send PIC an acknowledgment
+}
+
+int idt_register_interrupt_handler(int interrupt, INTERRUPT_HANDLER interrupt_handler)
+{
+	if (interrupt < 0 || interrupt >= CONIFEROS_TOTAL_INTERRUPTS)
+		return -EINVARG;
+
+	interrupt_handlers[interrupt] = interrupt_handler;
+	return 0;
 }
