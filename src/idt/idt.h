@@ -26,7 +26,7 @@ struct interrupt_frame
 typedef void* (*ISR80H_COMMAND)(struct interrupt_frame *frame);
 
 // Used to define interrupt handlers that can be registered with idt_register_interrupt_handler.
-typedef void (*INTERRUPT_HANDLER)(struct interrupt_frame *frame);
+typedef void (*INTERRUPT_HANDLER)();
 
 /* 
  * idt_zero - handler for interrupt 0

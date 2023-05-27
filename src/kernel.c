@@ -16,6 +16,7 @@
 #include "task/process.h"
 #include "config.h"
 #include "isr80h/isr80h.h"
+#include "keyboard/keyboard.h"
 
 /* Set up the GDT */
 struct tss tss;
@@ -133,6 +134,8 @@ void kernel_main()
 	run_smoke_tests();
 
 	print("Welcome to ConiferOS\n");
+
+	keyboard_init();
 
 	struct process *process = 0;
 	int rc = process_load("0:/print.bin", &process);

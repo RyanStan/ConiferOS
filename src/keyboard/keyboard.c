@@ -29,7 +29,7 @@ int keyboard_insert(struct keyboard *keyboard)
 
 void keyboard_init()
 {
-    keyboard_insert(ps2_init());
+    keyboard_insert(get_ps2_keyboard_driver());
 }
 
 // Increment the tail of the circular buffer. Ensures that it stays within the bounds of the buffer array.

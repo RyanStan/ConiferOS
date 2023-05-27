@@ -13,7 +13,7 @@
 /* Each kernel routine that a user program can invoke via interrupt 0x80 will be stored here */
 static ISR80H_COMMAND isr80h_commands[MAX_ISR80H_COMMANDS];
 
-// TODO: add comment
+// Registered interrupt handlers.
 static INTERRUPT_HANDLER interrupt_handlers[CONIFEROS_TOTAL_INTERRUPTS];
 
 // An array of pointers is defined in idt.asm. The array will contain the addresses
@@ -124,7 +124,7 @@ void interrupt_handler(int interrupt, struct interrupt_frame *frame)
 	swap_kernel_page_tables(); 								// switch to kernel pages
 	if (interrupt_handlers[interrupt] != 0) {
 		task_current_save_state(frame); 					// save the state of the task that was executing
-		interrupt_handlers[interrupt](frame);
+		interrupt_handlers[interrupt]();
 	}
 	swap_curr_task_page_tables(); 							// switch back to the current_task's pages
 	outb(0x20, 0x20);										// send PIC an acknowledgment

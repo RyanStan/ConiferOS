@@ -252,3 +252,4 @@ Once I finish the course, there are several things I want to experiment with:
 - The Kernel land code currently disables interrupts whenever it executes, because there aren't any
   safety mechanisms in place to support interleaving.  I would like to add some support for concurrency controls
   for kernel land code.
+- A PCI driver so I can dynamically find attached devices. Then I don't have to guess I/O port addresses.

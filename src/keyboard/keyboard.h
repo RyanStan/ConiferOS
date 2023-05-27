@@ -4,6 +4,8 @@
 #include "config.h"
 #include "task/process.h"
 
+#define KEYBOARD_INTERRUPT_NO   0x21
+
 // Virtual keyboard layer so that we can support different physical keyboards
 
 typedef int (*keyboard_init_function)();
