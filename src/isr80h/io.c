@@ -1,6 +1,7 @@
 #include "isr80h/io.h"
 #include "task/task.h"
 #include "print/print.h"
+#include "keyboard/keyboard.h"
 
 #define MAX_STR_SIZE 1024
 
@@ -18,4 +19,10 @@ void *isr80h_command_1_print(struct interrupt_frame *frame)
     print(buf);
 
     return 0;
+}
+
+void *isr80h_command_2_get_key_press(struct interrupt_frame *frame)
+{
+    char c = keyboard_pop();
+    return (void *)((int)c);        // Cast to integer and then cast to void*
 }

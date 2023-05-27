@@ -189,12 +189,15 @@ An interface for kernel code to register systems calls, or kernel commands, is p
 Misc. kernel commands are stored in [`src/isr80h/misc.h`](./src/isr80h/io.h), and IO related kernel commands are stored in [`src/isr80h/io.h`](./src/isr80h/io.h).
 
 ### User Programs
-User programs are stored in the [programs](./programs/) folder.  The program `sum_sys`[programs/test_sum_sycall](./programs/test_sum_syscall/) tests the SUM syscall/ kernel command. The program `print_sys` in [programs/test_print_syscall/](./programs/print/) tests the PRINT syscall/ kernel command.
+User programs are stored in the [programs](./programs/) folder.  The program `sum_sys`[programs/test_sum_sycall](./programs/test_sum_syscall/) tests the SUM syscall/ kernel command. The program `print_sys` in [programs/test_print_syscall/](./programs/print/) tests the `PRINT` and `GET_KEY_PRESS` syscall/ kernel commands.
 
 ### Virtual Keyboard Layer
 Each process structure has a `keyboard_buffer`, which is defined in [process.h](src/task/process.h). An interface for interacting with a process's keyboard
 buffer is defined in [keyboard.h](src/keyboard/keyboard.h). The `keyboard_push` function will push a character to the keyboard buffer of the current process,
 while `keyboard_pop` pops a character from the current task's process's keyboard buffer.
+
+A userland program can invoke the system call `SYSTEM_COMMAND_2_GET_KEY_PRESS` via interrupt 0x80, to pop a character off the current process's keyboard buffer.
+The handler for this system call is defined in [isr80h/io.h](src/isr80h/io.h).
 
 ### PS/2 Keyboard
 Qemu emulates an Intel 8042 chip, which is the PS/2 Controller. For more info on this chip, see ["'8042' PS/2 Controller" on OSDev](https://wiki.osdev.org/%228042%22_PS/2_Controller). This is the chip that controls communication between the PS/2 Keyboard and the CPU.
