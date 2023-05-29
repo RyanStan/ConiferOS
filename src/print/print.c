@@ -2,8 +2,12 @@
 #include "string/string.h"
 
 /* The QEMU PC emulator simulates a Cirrus CLGD 5446 PCI VGA card */
-#define VGA_WIDTH 80
-#define VGA_HEIGHT 20
+#define VGA_WIDTH 				80
+#define VGA_HEIGHT 				20
+#define BACKSPACE_ASCII_CHAR 	0x08
+
+static uint16_t terminal_row = 0;
+static uint16_t terminal_col = 0;
 
 /* The VGA card's frame buffer is memory mapped into the CPU's address space at 0xB8000 
  * (courtesy of the BIOS).
@@ -25,14 +29,33 @@ void terminal_put_char(int row, int col, char c, char color)
 	video_mem[row * VGA_WIDTH + col] = terminal_make_char(c, color);
 }
 
+// Deletes the last character entered on the display
+void terminal_backspace()
+{
+	if (terminal_row == 0 && terminal_col == 0)
+		return;
+
+	if (terminal_col == 0) {
+		terminal_row -= 1;
+		terminal_col = VGA_WIDTH;
+	}
+
+	terminal_col -= 1;
+	terminal_write_char(' ', 15);
+	terminal_col -= 1;
+}
+
 void terminal_write_char(char c, char color)
 {
-	static uint16_t terminal_row = 0;
-	static uint16_t terminal_col = 0;
 
 	if (c == '\n') {
 		terminal_row++;
 		terminal_col = 0;
+		return;
+	}
+
+	if (c == BACKSPACE_ASCII_CHAR) {
+		terminal_backspace();
 		return;
 	}
 
