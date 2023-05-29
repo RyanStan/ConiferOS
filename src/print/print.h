@@ -8,6 +8,7 @@ uint16_t terminal_make_char(char c, char color);
 
 void terminal_put_char(int row, int col, char c, char color);
 
+// Write a char to the next available row,col of the VGA framebuffer
 void terminal_write_char(char c, char color);
 
 void terminal_initialize();

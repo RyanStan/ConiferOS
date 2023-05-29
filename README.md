@@ -141,8 +141,8 @@ A task is owned by a process.  For now, a process only owns one task, but the in
 can eventually own multiple process.  The process structure is defined in [process.h](src/task/process.h).
 
 When a user attempts to load an executable with `process_load`, a process will be created which contains reference to that executable (`filename`).
-For now, only binary executables are supported.  A process, upon initialization, will allocate space for the executable and the stack,
-and will map that memory into the page tables of the task that the process encapsulates.
+For now, only binary executables are supported.  When the kernel initializes a process, it will allocate space for the executable and the stack,
+and will map that memory into the page tables of the task that the process encapsulates. For example, see `process_map_task_memory` in [process.c](src/task/process.c).
 
 Eventually, I want to move away from the process abstraction.  The Linux Kernel does not differentiate between processes and threads,
 or processes and tasks, and I do not want to either.

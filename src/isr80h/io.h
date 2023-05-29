@@ -13,4 +13,8 @@ void *isr80h_command_1_print(struct interrupt_frame *frame);
  */
 void *isr80h_command_2_get_key_press(struct interrupt_frame *frame);
 
+/* Gets a character argument from the task's stack. Then prints the character to the next available
+ * row and column on the display.
+ */
+void *isr80h_command_3_put_char_on_display(struct interrupt_frame *frame) ;
 #endif

@@ -2,7 +2,9 @@
 section .asm
 
 ; This program prints a message. Then, it waits for a key to be pressed.
-; When a key is pressed, it prints another message. Then it enters an infinite loop.
+; When a key is pressed, it prints the key to the display.
+
+; Three syscalls are tested: PRINT, GET_KEY_PRESS, PUT_CHAR_ON_DISPLAY
 
 global _start
 _start:
@@ -13,15 +15,14 @@ _start:
    int 0x80
    add esp, 4              ; Restore the stack (remove pushed value)
 
+_loop:
    call get_key
-   push key_press_message
-   mov eax, 1              ; Command 1 PRINT
+   push eax
+   mov eax, 3              ; Command 1 PUT_CHAR_ON_DISPLAY
    int 0x80
    add esp, 4              ; Restore the stack (remove pushed value)
 
-   jmp $                   ; Infinite loop
-
-
+   jmp _loop
 
 
 get_key:

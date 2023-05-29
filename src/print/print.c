@@ -5,11 +5,8 @@
 #define VGA_WIDTH 80
 #define VGA_HEIGHT 20
 
-/* TODO: add function comments and make things more clear (i.e. the names of functions) */
-
-/* Since we don't have paging enabled or any sort of virtual memory,
- * we are literally writing to the address 0xB80000 which is (historically and conventionally) mapped to the video frame buffer by the BIOS
- * 
+/* The VGA card's frame buffer is memory mapped into the CPU's address space at 0xB8000 
+ * (courtesy of the BIOS).
  */
 static uint16_t* video_mem = (uint16_t*)(0xB8000);
 
