@@ -10,6 +10,7 @@
 #define ERDONLY         6
 #define EUNIMP          7
 #define EISTAKEN        8
+#define EIFORMAT        9   // Invalid format
 
 #define FALSE		    0
 #define TRUE		    1

@@ -89,6 +89,8 @@ There's no concept of "high memory" for the kernel at the moment, and no split i
 In 32-bit x86 with 4-KByte pages, a two level paging scheme is used.  Each linear address maps an index into the page directory,
 and index into the corresponding page table, and the byte offset within the page.
 
+I'll talk about paging for user processes under "Processes and Tasks".
+
 ### The Heap
 An interface to generate heaps, which manage a pool of memory (technically virtual address space),
 is defined in [heap.h](src/memory/heap/heap.h) and the allocation algorithm is described in 
@@ -141,7 +143,7 @@ A task is owned by a process.  For now, a process only owns one task, but the in
 can eventually own multiple process.  The process structure is defined in [process.h](src/task/process.h).
 
 When a user attempts to load an executable with `process_load`, a process will be created which contains reference to that executable (`filename`).
-For now, only binary executables are supported.  When the kernel initializes a process, it will allocate space for the executable and the stack,
+Binary executables and ELF executables are supported.  When the kernel initializes a process, it will allocate space for the executable and the stack,
 and will map that memory into the page tables of the task that the process encapsulates. For example, see `process_map_task_memory` in [process.c](src/task/process.c).
 
 Eventually, I want to move away from the process abstraction.  The Linux Kernel does not differentiate between processes and threads,
@@ -157,6 +159,10 @@ we set the hardware context as follows:
 
 ```
 task->registers.ip = TASK_LOAD_VIRTUAL_ADDRESS;
+if (process->format == ELF) {
+    struct elf32_ehdr *elf32_ehdr = elf_get_ehdr(process->elf_file);
+    task->registers.ip = elf32_ehdr->e_entry;
+}
 task->registers.ss = USER_DATA_SEGMENT;
 task->registers.cs = USER_CODE_SEGMENT;
 task->registers.esp = TASK_STACK_VIRT_ADDR;
@@ -238,6 +244,16 @@ dev: PIIX3, id ""
 
 The PS/2 driver is in the works. IRQ 1 is typically raised by a keyboard device. We've mapped IRQ 1 to IDT entry 0x21.
 
+### ELF (Executable and Linking Format)
+As mentioned in "Processes and Tasks", ConiferOS contains an ELF loader which can be used to instantiate user processes
+from ELF executables. The loadable segments of the ELF file will be mapped into the address space of the user processes.
+
+The ELF loader code can be found in [src/loader/formats](src/loader/formats/).
+
+Currently, the ELF loader only supports executable files (`e_type` = `ET_EXEC`). Thus, the ELF loader
+does not support relocatable files or dynamic shared libraries.
+
+ELF Specification that was used as reference: https://refspecs.linuxfoundation.org/elf/elf.pdf
 
 ### Build
 TODO: add section on linker script
@@ -256,3 +272,4 @@ Once I finish the course, there are several things I want to experiment with:
   safety mechanisms in place to support interleaving.  I would like to add some support for concurrency controls
   for kernel land code.
 - A PCI driver so I can dynamically find attached devices. Then I don't have to guess I/O port addresses.
+- `mmap` function to map files into memory.

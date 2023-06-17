@@ -8,6 +8,8 @@
 #include "print/print.h"
 #include "string/string.h"
 #include "kernel.h"
+#include "loader/formats/elf_file.h"
+#include "loader/formats/elf.h"
 
 /* The current process that is running */
 struct process *current_process = 0;
@@ -36,6 +38,7 @@ struct process *process_get(int pid)
     return processes[pid];
 }
 
+// Load the data in filename into memory and points the process's binary_executable field to this data
 static int process_load_binary_executable(const char *filename, struct process *process)
 {
     int fd = fopen(filename, "r");
@@ -48,17 +51,17 @@ static int process_load_binary_executable(const char *filename, struct process *
     if (rc < 0)
         goto out;
 
-    /* We will load the file at filename into virtual memory at executable_memory_addr */
-    void *executable_memory_addr = kzalloc(stat.filesize);
-    if (!executable_memory_addr) {
+    /* We will load the file at filename into virtual memory at binary_executable */
+    void *binary_executable = kzalloc(stat.filesize);
+    if (!binary_executable) {
         rc = -ENOMEM;
         goto out;
     }
 
-    if ((rc = fread(executable_memory_addr, stat.filesize, 1, fd)) < 0)
+    if ((rc = fread(binary_executable, stat.filesize, 1, fd)) < 0)
         goto out;
     
-    process->executable_memory_addr = executable_memory_addr;
+    process->binary_executable = binary_executable;
     process->size = stat.filesize;
     process->format = BINARY;
 
@@ -67,25 +70,77 @@ out:
     return rc;
 }
 
-/* Load the data (binary executable) in the file at filename into memory */
-static int process_load_data(const char *filename, struct process *process)
+static int process_load_elf_executable(const char *filename, struct process *process)
 {
-    /* TODO: in the future, we want to support ELF files as well */
-    return process_load_binary_executable(filename, process);
+    struct elf_file *elf_file = 0;
+    int rc = elf_file_init(filename, &elf_file);
+    if (rc < 0) {
+        print("process_load_elf_executable: error initializing elf_file\n");
+        return rc;
+    }
+    
+    process->format = ELF;
+    process->elf_file = elf_file;
+    return 0;
 }
 
-int process_map_task_binary(struct process *process)
+/* Load the data in filename into memory and updates the process structure accordingly.
+ * Will attempt to parse the file as an ELF executable, and if that fails, then a binary executable.
+ *
+ * Note: this function does not load the executable into the page tables of the process's current task. That is done by process_map_task_memory.
+ */
+static int process_load_data(const char *filename, struct process *process)
+{
+    int rc = process_load_elf_executable(filename, process);
+    if (rc == -EIFORMAT) {
+        rc = process_load_binary_executable(filename, process);
+    }
+    return rc;
+}
+
+/* Maps the process's binary_executable into the page tables of the process's task 
+ * at address TASK_LOAD_VIRTUAL_ADDRESS.
+ */
+static int process_map_task_binary(struct process *process)
 {
     return paging_create_mapping(process->task->paging, (void*)TASK_LOAD_VIRTUAL_ADDRESS, 
-                                    process->executable_memory_addr, 
-                                    paging_align_address(process->executable_memory_addr + process->size),
+                                    process->binary_executable, 
+                                    paging_align_address(process->binary_executable + process->size),
                                     PAGING_PRESENT | PAGING_USER_SUPERVISOR | PAGING_READ_WRITE);
 }
 
-/* This function maps the process's executable memory (containing executable binary file)
+/* Maps the process's ELF file's loadable segments into the page tables of the process's tasks.
+ * 
+ */
+static int process_map_task_elf(struct process *process)
+{
+    struct elf_file *elf_file = process->elf_file;
+    int rc = 0;
+
+    // Loop through the program headers
+    struct elf32_ehdr *elf32_ehdr = elf_get_ehdr(elf_file);
+    struct elf32_phdr *phdr_table = elf_get_phdr_table(elf32_ehdr);
+    
+    for (int i = 0; i < elf32_ehdr->e_phnum; i++) {
+        struct elf32_phdr *phdr = &phdr_table[i];
+        void *phdr_phys_addr = elf_file_get_segment_phys_addr(elf_file, phdr);
+        int pflags = PAGING_PRESENT | PAGING_USER_SUPERVISOR;
+        if (phdr->p_flags & PF_W) {
+            pflags |= PAGING_READ_WRITE;
+        }
+        
+        rc = paging_create_mapping(process->task->paging, paging_align_to_lower_page((void *)phdr->p_vaddr), paging_align_to_lower_page((void *)phdr_phys_addr),
+                            paging_align_address(phdr_phys_addr+phdr->p_memsz), pflags);
+        if (rc < 0)
+            break;
+    }
+
+    return rc;
+}
+
+/* This function maps the process's executable memory (containing executable binary file or elf file)
  * and the stack into the page tables of the process's task.
  *
- * TODO: support ELF.
  */
 int process_map_task_memory(struct process *process)
 {
@@ -97,7 +152,19 @@ int process_map_task_memory(struct process *process)
         return rc;
 
     // Map the executable's physical address into task's page tables.
-    return process_map_task_binary(process);
+    switch (process->format)
+    {
+        case ELF:
+            rc = process_map_task_elf(process);
+            break;
+        case BINARY:
+            rc = process_map_task_binary(process);
+            break;
+        default:
+            panic("ERROR process_map_task_memory: unexpected executable format\n");
+            break;
+    }
+    return rc;
 }
 
 /* Free the kernel heap memory allocated for process */
@@ -105,8 +172,21 @@ void process_free(struct process *process)
 {
     // TODO: make sure to free any left over memory_allocations as well
 
-    if (process->executable_memory_addr)
-        kfree(process->executable_memory_addr);
+    switch (process->format)
+    {
+        case ELF:
+            if (process->elf_file) {
+                elf_file_close(process->elf_file);
+            }
+            break;
+        case BINARY:
+            if (process->binary_executable) {
+                kfree(process->binary_executable);
+            }
+            break;
+        default:
+            break;
+    }
 
     if (process->stack_addr)
         kfree(process->stack_addr);

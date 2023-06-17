@@ -143,6 +143,16 @@ void *paging_align_address(void *addr)
     return (void*)((uint32_t)addr + PAGING_PAGE_SIZE - ((uint32_t)addr % PAGING_PAGE_SIZE));
 }
 
+void *paging_align_to_lower_page(void *addr)
+{
+    if (paging_is_aligned(addr))
+        return addr;
+
+    uint32_t _addr = (uint32_t)addr;
+    _addr -= (_addr % PAGING_PAGE_SIZE);
+    return (void*)_addr;
+}
+
 uint32_t paging_get_pte(uint32_t *task_page_directory, void *virt_addr)
 {
         uint32_t directory_index = 0;
