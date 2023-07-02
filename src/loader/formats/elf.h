@@ -2,6 +2,8 @@
  *  https://refspecs.linuxfoundation.org/elf/elf.pdf
  *
  * The comments in this file are taken straight out of the specification.
+ * 
+ * This file contains type definitions from the formal ELF specification.
  */
 #ifndef ELF_H
 #define ELF_H
@@ -58,8 +60,8 @@
 // Specifies the data encoding of the processor-specific
 // data in the object file.
 #define ELFDATANONE     0   // Invalid data encoding
-#define ELFDATA2LSB     1   // LSB
-#define ELFDATAMSB      2   // MSB
+#define ELFDATA2LSB     1   // 2's complement values, LSB
+#define ELFDATAMSB      2   // 2's complements values, MSB
 
 /* SHN_UNDEF marks an undefined, missing,
  * irrelevant, or meaningless section reference.

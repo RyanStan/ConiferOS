@@ -238,6 +238,11 @@ dev: PIIX3, id ""
 
 The PS/2 driver is in the works. IRQ 1 is typically raised by a keyboard device. We've mapped IRQ 1 to IDT entry 0x21.
 
+### ELF (Executable and Linking Format)
+Notes while in development:
+- We are only going to support static executables.
+- ELF Specification: https://refspecs.linuxfoundation.org/elf/elf.pdf
+- We only support 32-bit ELF files (ELFCLASS32)
 
 ### Build
 TODO: add section on linker script
@@ -256,3 +261,4 @@ Once I finish the course, there are several things I want to experiment with:
   safety mechanisms in place to support interleaving.  I would like to add some support for concurrency controls
   for kernel land code.
 - A PCI driver so I can dynamically find attached devices. Then I don't have to guess I/O port addresses.
+- `mmap` function to map files into memory.

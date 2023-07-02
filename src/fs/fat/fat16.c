@@ -645,7 +645,7 @@ void *fat16_fopen(struct disk *disk, struct path_part *path, enum file_mode mode
  * Returns the count of size elements that were read.
  * This may not always equal nmemb since an error or end-of-file may occur after some
  * elements have already been read.  Therefore, to check for failure, 
- * look for a short item count return value (or 0)
+ * look for a short item count return value (or < 0)
  */
 size_t fat16_fread(struct disk *disk, void *descriptor, size_t size, size_t nmemb, char *out)
 {

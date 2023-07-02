@@ -172,7 +172,7 @@ struct filesystem *fs_resolve(struct disk *disk);
  * Returns the count of size elements that were read.
  * This may not always equal nmemb since an error or end-of-file may occur after some
  * elements have already been read.
- * Therefore, to check for failure, look for a short item count return value (or 0)
+ * Therefore, to check for failure, look for a short item count return value (or < 0)
  */
 size_t fread(void *ptr, size_t size, size_t nmemb, int fd);
 
