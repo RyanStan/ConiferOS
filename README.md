@@ -89,6 +89,8 @@ There's no concept of "high memory" for the kernel at the moment, and no split i
 In 32-bit x86 with 4-KByte pages, a two level paging scheme is used.  Each linear address maps an index into the page directory,
 and index into the corresponding page table, and the byte offset within the page.
 
+I'll talk about paging for user processes under "Processes and Tasks".
+
 ### The Heap
 An interface to generate heaps, which manage a pool of memory (technically virtual address space),
 is defined in [heap.h](src/memory/heap/heap.h) and the allocation algorithm is described in 

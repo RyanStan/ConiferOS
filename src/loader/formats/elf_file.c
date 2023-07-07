@@ -7,12 +7,6 @@
 #include "status.h"
 #include "print/print.h"
 
-/*
- * The utility functions in this file assume that the ELF File has been loaded into contiguous memory.
- * They are useful for parsing the raw file data.
- * TODO: check back in with this comment as I progress.
- */
-
 // Every ELF file starts with these four bytes.
 const char elf_signature[] = {0x7F, 'E', 'L', 'F'};
 
@@ -190,7 +184,7 @@ int process_elf_file(struct elf_file *elf_file)
     struct elf32_ehdr *elf32_ehdr = elf_get_ehdr(elf_file);
     if (!valid_elf_file(elf32_ehdr)) {
         print("ERROR: process_elf_file: Invalid ELF file\n");
-        return -EINVARG;
+        return -EIFORMAT;
     }
 
     int rc = elf_process_pheaders(elf_file);

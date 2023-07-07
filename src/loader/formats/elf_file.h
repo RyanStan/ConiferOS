@@ -34,6 +34,10 @@ struct elf_file {
     /* These variables hold the physical address range that the loadable
      * segments have been mapped into. The Kernel Page Tables have a 1:1 address mapping with physical memory,
      * so kernel processes can use these addresses to touch the loadable segments.
+     * 
+     * We don't set these values to the physical addresses given to us
+     * in the ELF file because our operating system makes it's own decision about
+     * which physical memory address to load these ELF files into.
      */
     void *elf_phys_addr_base;
     void *elf_phys_addr_end;

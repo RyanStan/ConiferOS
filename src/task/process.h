@@ -5,9 +5,11 @@
 #include "task/task.h"
 #include "config.h"
 #include "keyboard/keyboard.h"
+#include "loader/formats/elf_file.h"
 
 enum executable_format {
         BINARY,
+        ELF,
 };
 
 /* 
@@ -41,11 +43,13 @@ struct process {
     void *mem_allocs[PROCESS_MAX_ALLOCATIONS];
 
     /* The pointer to the memory that the process executable is loaded into.
-     * This assumes we're loading a program as binary (i.e. no ELF sections like text, data, etc.).
-     * Since kernel land executes with direct memory mapping (via page tables), this is the real physical address
-     * of where the text is loaded into memory.
+     * If the process is instantiated from an ELF file, then elf_file will be set. 
+     * If the process is instantiated from a binary executable, then binary_executable will be set.
      */
-    void *executable_memory_addr;
+    union {
+        void *binary_executable;
+        struct elf_file *elf_file;
+    };
 
     /* Pointer to the process's stack in memory 
      * Since kernel land executes with direct memory mapping (via page tables), this is the real physical address
@@ -53,7 +57,9 @@ struct process {
      */
     void *stack_addr;
 
-    /* The size of the executable mapped to memory at executable_memory_addr*/
+    /* The size of the binary_executable mapped to memory.
+     * This is only valid if file format is BINARY.
+     */
     uint32_t size;
 
     enum executable_format format;
