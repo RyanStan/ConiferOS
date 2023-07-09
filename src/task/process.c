@@ -9,6 +9,7 @@
 #include "string/string.h"
 #include "kernel.h"
 #include "loader/formats/elf_file.h"
+#include "loader/formats/elf.h"
 
 /* The current process that is running */
 struct process *current_process = 0;
@@ -73,8 +74,10 @@ static int process_load_elf_executable(const char *filename, struct process *pro
 {
     struct elf_file *elf_file = 0;
     int rc = elf_file_init(filename, &elf_file);
-    if (rc < 0)
+    if (rc < 0) {
+        print("process_load_elf_executable: error initializing elf_file\n");
         return rc;
+    }
     
     process->format = ELF;
     process->elf_file = elf_file;
@@ -89,9 +92,9 @@ static int process_load_elf_executable(const char *filename, struct process *pro
 static int process_load_data(const char *filename, struct process *process)
 {
     int rc = process_load_elf_executable(filename, process);
-    if (rc == -EIFORMAT)
+    if (rc == -EIFORMAT) {
         rc = process_load_binary_executable(filename, process);
-    
+    }
     return rc;
 }
 
@@ -108,13 +111,31 @@ static int process_map_task_binary(struct process *process)
 
 /* Maps the process's ELF file's loadable segments into the page tables of the process's tasks.
  * 
- * TODO: mapping the entire elf file as writable isn't ideal.
  */
 static int process_map_task_elf(struct process *process)
 {
     struct elf_file *elf_file = process->elf_file;
-    return paging_create_mapping(process->task->paging, paging_align_to_lower_page(elf_file->elf_virtual_addr_base), elf_file->elf_phys_addr_base,
-                            paging_align_address(elf_file->elf_phys_addr_end), PAGING_PRESENT | PAGING_USER_SUPERVISOR | PAGING_READ_WRITE);
+    int rc = 0;
+
+    // Loop through the program headers
+    struct elf32_ehdr *elf32_ehdr = elf_get_ehdr(elf_file);
+    struct elf32_phdr *phdr_table = elf_get_phdr_table(elf32_ehdr);
+    
+    for (int i = 0; i < elf32_ehdr->e_phnum; i++) {
+        struct elf32_phdr *phdr = &phdr_table[i];
+        void *phdr_phys_addr = elf_file_get_segment_phys_addr(elf_file, phdr);
+        int pflags = PAGING_PRESENT | PAGING_USER_SUPERVISOR;
+        if (phdr->p_flags & PF_W) {
+            pflags |= PAGING_READ_WRITE;
+        }
+        
+        rc = paging_create_mapping(process->task->paging, paging_align_to_lower_page((void *)phdr->p_vaddr), paging_align_to_lower_page((void *)phdr_phys_addr),
+                            paging_align_address(phdr_phys_addr+phdr->p_filesz), pflags);
+        if (rc < 0)
+            break;
+    }
+
+    return rc;
 }
 
 /* This function maps the process's executable memory (containing executable binary file or elf file)

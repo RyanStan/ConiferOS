@@ -56,4 +56,18 @@ int elf_file_init(const char *elf_filename, struct elf_file **elf_file_out);
 // Free the memory associated with the elf_file structure
 void elf_file_close(struct elf_file *elf_file);
 
+/* Returns a pointer to the ELF header of the ELF file.
+ * Prerequisite: The ELF file must have been loaded into memory (elf_file_buffer).
+ */
+struct elf32_ehdr *elf_get_ehdr(struct elf_file *elf_file);
+
+// Returns a pointer to the program header table
+struct elf32_phdr *elf_get_phdr_table(struct elf32_ehdr *header);
+
+// Returns the program header at the specified index in the program header table.
+struct elf32_phdr *elf_get_phdr(struct elf32_ehdr *header, unsigned int index);
+
+// Returns the physical address of the segment associated with the program header elf32_phdr.
+void *elf_file_get_segment_phys_addr(struct elf_file *elf_file, struct elf32_phdr *elf32_phdr);
+
 #endif

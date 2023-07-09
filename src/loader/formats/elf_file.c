@@ -49,10 +49,7 @@ static bool elf_valid_entry(struct elf32_ehdr *header)
     return header->e_entry == TASK_LOAD_VIRTUAL_ADDRESS;
 }
 
-/* Returns a pointer to the ELF header of the ELF file.
- * Prerequisite: The ELF file must have been loaded into memory (elf_file_buffer).
- */
-static struct elf32_ehdr *elf_get_ehdr(struct elf_file *elf_file)
+struct elf32_ehdr *elf_get_ehdr(struct elf_file *elf_file)
 {
     if (!elf_file->elf_file_buffer)
         return 0;
@@ -86,8 +83,6 @@ struct elf32_shdr *elf_get_shdr(struct elf32_ehdr *header, unsigned int index)
     return &shdr[index];
 }
 
-
-// Returns a pointer to the program header table
 struct elf32_phdr *elf_get_phdr_table(struct elf32_ehdr *header)
 {
     if (!elf_has_program_header_table(header))
@@ -97,7 +92,6 @@ struct elf32_phdr *elf_get_phdr_table(struct elf32_ehdr *header)
     return phdr_table;
 }
 
-// Returns the program header at the specified index in the program header table.
 struct elf32_phdr *elf_get_phdr(struct elf32_ehdr *header, unsigned int index)
 {
     struct elf32_phdr *phdr = elf_get_phdr_table(header);
@@ -113,6 +107,10 @@ char *elf_get_string_table(struct elf32_ehdr *header)
 
 ///////////////////////////////////////////////////////////////////
 
+void *elf_file_get_segment_phys_addr(struct elf_file *elf_file, struct elf32_phdr *elf32_phdr)
+{
+    return elf_file->elf_file_buffer + elf32_phdr->p_offset;
+}
 
 /* Process a program header of type PT_LOAD (loadable segment)
  * Expects that PT_LOAD segments are contiguous and that the first segment is executable + contains the code section.
@@ -218,7 +216,8 @@ int elf_file_init(const char *elf_filename, struct elf_file **elf_file_out)
 
     elf_file->elf_file_buffer = kzalloc(stat.filesize);
     rc = fread(elf_file->elf_file_buffer, stat.filesize, 1, fd);
-    if (rc < stat.filesize) {
+    if (rc != 1) {
+        print("elf_file_init: error reading elf file into elf_file_buffer\n");
         kfree(elf_file->elf_file_buffer);
         kfree(elf_file);
         return -EINVARG;
@@ -237,7 +236,7 @@ int elf_file_init(const char *elf_filename, struct elf_file **elf_file_out)
     return 0;
 }
 
-void elf_close(struct elf_file *elf_file)
+void elf_file_close(struct elf_file *elf_file)
 {
     if (!elf_file)
         return;

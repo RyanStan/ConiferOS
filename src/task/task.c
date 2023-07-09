@@ -7,6 +7,8 @@
 #include "kernel.h"
 #include "string/string.h"
 #include "task/process.h"
+#include "loader/formats/elf_file.h"
+#include "loader/formats/elf.h"
 
 /*  This function is used to enter userland from kernel mode.
  * For each register in registers, it will set the real register with the corresponding value.
@@ -95,6 +97,11 @@ static int task_init(struct task *task, struct process *process)
         return -EIO;
 
     task->registers.ip = TASK_LOAD_VIRTUAL_ADDRESS;
+    if (process->format == ELF) {
+        struct elf32_ehdr *elf32_ehdr = elf_get_ehdr(process->elf_file);
+        task->registers.ip = elf32_ehdr->e_entry;
+    }
+
     task->registers.ss = USER_DATA_SEGMENT;
     task->registers.cs = USER_CODE_SEGMENT;
     task->registers.esp = TASK_STACK_VIRT_ADDR;
