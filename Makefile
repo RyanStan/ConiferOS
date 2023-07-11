@@ -39,6 +39,8 @@ USER_PROG_2_FOLDER = test_print_syscall
 USER_PROG_2 = print
 USER_PROG_3_FOLDER = test_elf_loader
 USER_PROG_3 = print
+USER_PROG_4_FOLDER = test_c_main
+USER_PROG_4 = main
 
 all: user_programs bin/disk.img
 
@@ -49,9 +51,11 @@ bin/disk.img: bin/os.bin
 	sudo mount -t vfat bin/disk.img /mnt/d
 	echo "Hello World" > ./hello.txt
 	sudo cp ./hello.txt /mnt/d
-	sudo cp ./programs/$(USER_PROG_1_FOLDER)/$(USER_PROG_1).bin /mnt/d
-	sudo cp ./programs/$(USER_PROG_2_FOLDER)/$(USER_PROG_2).bin /mnt/d
-	sudo cp ./programs/$(USER_PROG_3_FOLDER)/$(USER_PROG_3).elf /mnt/d
+#	TODO: find a better way of building and copying user programs to the filesystem
+	sudo cp ./user_programs/$(USER_PROG_1_FOLDER)/$(USER_PROG_1).bin /mnt/d
+	sudo cp ./user_programs/$(USER_PROG_2_FOLDER)/$(USER_PROG_2).bin /mnt/d
+	sudo cp ./user_programs/$(USER_PROG_3_FOLDER)/$(USER_PROG_3).elf /mnt/d
+	sudo cp ./user_programs/$(USER_PROG_4_FOLDER)/$(USER_PROG_4).elf /mnt/d
 	sudo umount /mnt/d
 
 # os.bin is a concatenation of the boot binary and the kernel binary.
@@ -179,16 +183,20 @@ run_no_restart:
 # Build userland programs
 .PHONY: user_programs
 user_programs:
-	cd ./programs/$(USER_PROG_1_FOLDER) && $(MAKE) all
-	cd ./programs/$(USER_PROG_2_FOLDER) && $(MAKE) all
-	cd ./programs/$(USER_PROG_3_FOLDER) && $(MAKE) all
+	cd ./user_programs/stdlib && $(MAKE) all
+	cd ./user_programs/$(USER_PROG_1_FOLDER) && $(MAKE) all
+	cd ./user_programs/$(USER_PROG_2_FOLDER) && $(MAKE) all
+	cd ./user_programs/$(USER_PROG_3_FOLDER) && $(MAKE) all
+	cd ./user_programs/$(USER_PROG_4_FOLDER) && $(MAKE) all
 
 # Clean userland programs
 .PHONY: user_programs_clean
 user_programs_clean:
-	cd ./programs/$(USER_PROG_1_FOLDER) && $(MAKE) clean
-	cd ./programs/$(USER_PROG_2_FOLDER) && $(MAKE) clean
-	cd ./programs/$(USER_PROG_3_FOLDER) && $(MAKE) clean
+	cd ./user_programs/stdlib && $(MAKE) clean
+	cd ./user_programs/$(USER_PROG_1_FOLDER) && $(MAKE) clean
+	cd ./user_programs/$(USER_PROG_2_FOLDER) && $(MAKE) clean
+	cd ./user_programs/$(USER_PROG_3_FOLDER) && $(MAKE) clean
+	cd ./user_programs/$(USER_PROG_4_FOLDER) && $(MAKE) clean
 
 .PHONY: clean
 clean: user_programs_clean

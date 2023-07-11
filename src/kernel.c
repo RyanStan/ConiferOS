@@ -138,9 +138,9 @@ void kernel_main()
 	keyboard_init();
 
 	struct process *process = 0;
-	int rc = process_load("0:/print.elf", &process);
+	int rc = process_load("0:/main.elf", &process);
 	if (rc < 0)
-		panic("Failed to load 0:/print.elf\n");
+		panic("Failed to load 0:/main.elf\n");
 
 	// enable_interrupts(); TODO: task run code expects interrupts to be disabled...
 

@@ -195,7 +195,10 @@ An interface for kernel code to register systems calls, or kernel commands, is p
 Misc. kernel commands are stored in [`src/isr80h/misc.h`](./src/isr80h/io.h), and IO related kernel commands are stored in [`src/isr80h/io.h`](./src/isr80h/io.h).
 
 ### User Programs
-User programs are stored in the [programs](./programs/) folder.  The program `sum_sys`[programs/test_sum_sycall](./programs/test_sum_syscall/) tests the SUM syscall/ kernel command. The program `print_sys` in [programs/test_print_syscall/](./programs/print/) tests the `PRINT` and `GET_KEY_PRESS` syscall/ kernel commands.
+User programs are stored in the [user_programs](./user_programs/) folder.  The program `sum_sys`[programs/test_sum_sycall](./programs/test_sum_syscall/) tests the SUM syscall/ kernel command. The program `print_sys` in [user_programs/test_print_syscall/](./user_programs/print/) tests the `PRINT` and `GET_KEY_PRESS` syscall/ kernel commands.
+
+The [stdlib](./user_programs/stdlib/) folder contains our C standard library, `stdlib.elf`. It also contains an entry point to user land C programs, `start`,
+which defines the `_start` symbol and is responsible for calling the `main` function.
 
 ### Virtual Keyboard Layer
 Each process structure has a `keyboard_buffer`, which is defined in [process.h](src/task/process.h). An interface for interacting with a process's keyboard
@@ -259,10 +262,7 @@ ELF Specification that was used as reference: https://refspecs.linuxfoundation.o
 TODO: add section on linker script
 
 ## What's Next?
-I'm still working through the course.  Topics left are implementing processes, creating user-space
-functionality, making paging useful, creating an ELF loader, kernel commands, and libraries like stdlib.
-
-Once I finish the course, there are several things I want to experiment with:
+There are several things I want to experiment with:
 - A networking stack.  The emulator provides a network card to interact with.
 - A dynamic device driver layer so that the kernel can support interacting with different hardware by loading in different drivers at runtime.
 - Making the heap allocation algorithm more efficient.  Right now, it's a fragmented mess. 
