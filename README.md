@@ -182,8 +182,8 @@ However, at that point, we can only read the kernel memory, not write it. I woul
 transition gap, from kernel code having swapped the current page tables, to when the user process actually begins executing.
 
 ### Userland to Kernel Communication (int 0x80)
-The interrupt 0x80 is used to communicate with the kernel from userland.  The userland program will put a command id into the eax register,
-and push arguments onto the stack.  Given the command value, the kernel will know which operation (system call) to perform.
+The interrupt 0x80 is used to communicate with the kernel from userland.  The userland program will put a command ID into the eax register,
+and push arguments onto the stack.  Given the command ID, the kernel will know which operation (system call) to perform.
 
 The ISR that handles 0x80 is `isr80h_wrapper`, which is defined in [idt.asm](src/idt/idt.asm).  The wrapper saves the state of the user program's
 general purpose registers, and then calls `isr80h_handler`.  The definition for this function is in [idt.h](src/idt/idt.h).  This function finishes converting
@@ -197,8 +197,14 @@ Misc. kernel commands are stored in [`src/isr80h/misc.h`](./src/isr80h/io.h), an
 ### User Programs
 User programs are stored in the [user_programs](./user_programs/) folder.  The program `sum_sys`[programs/test_sum_sycall](./programs/test_sum_syscall/) tests the SUM syscall/ kernel command. The program `print_sys` in [user_programs/test_print_syscall/](./user_programs/print/) tests the `PRINT` and `GET_KEY_PRESS` syscall/ kernel commands.
 
-The [stdlib](./user_programs/stdlib/) folder contains our C standard library, `stdlib.elf`. It also contains an entry point to user land C programs, `start`,
+The [stdlib](./user_programs/stdlib/) folder contains our C standard library, `stdlib.elf`. 
+
+The header, [coniferos.h](./user_programs/stdlib/src/coniferos.h), is the C interface for calling Conifer OS system calls.
+
+The stdlib contains an entry point to user land C programs, `start`,
 which defines the `_start` symbol and is responsible for calling the `main` function.
+
+Other user programs which wish to start with `main` must link to the stdlib and declare their entry point as `_start`. E.g. see [user_programs/test_c_main](./user_programs/test_c_main/).
 
 ### Virtual Keyboard Layer
 Each process structure has a `keyboard_buffer`, which is defined in [process.h](src/task/process.h). An interface for interacting with a process's keyboard
