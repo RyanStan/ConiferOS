@@ -286,3 +286,55 @@ void set_current_process(struct process *process)
 
     current_process = process;
 }
+
+/* Find a slot within the process's memory allocations array that does not point to
+ * memory allocated by a user process yet.
+ * Returns the index of the slot, or < 0 on errors.
+ */
+static int process_get_free_memory_allocation_slot(struct process *process)
+{
+    for (int i = 0; i < PROCESS_MAX_ALLOCATIONS; i++) {
+        if (process->mem_allocs[i] == 0) {
+            // the memory allocation slot is free
+            return i;
+        }
+    }
+    return -ENOMEM;
+}
+
+void *process_malloc(struct process *process, size_t size)
+{
+    /* TODO [RyanStan 09-19-23]  Sharing a memory heap between user processes and the kernel
+     * is not a good idea. You could have a user process fragment the heap and cause
+     * problems in the kernel.
+     */
+    void *ptr = kzalloc(size);
+    if (!ptr) {
+        kfree(ptr);
+        return 0;
+    }
+
+    int index = process_get_free_memory_allocation_slot(process);
+    if (index < 0) {
+        kfree(ptr);
+        return 0;
+    }
+
+    /* Create a 1:1 mapping from the physical
+     * memory address returned by kzalloc to the virtual address in the process's page tables.
+     *
+     * TODO [RyanStan 09-22-23] This 1:1 mapping could cause problems - how do we know
+     * that something else won't be mapped into that virtual address space at the address ptr? 
+     * We should keep track of the memory regions that have been mapped into the task's address space.
+     */
+    int rc = paging_create_mapping(process->task->paging, (void*)ptr, ptr,
+                                    paging_align_address(ptr + size), 
+                                    PAGING_PRESENT | PAGING_USER_SUPERVISOR | PAGING_READ_WRITE);
+    if (rc < 0) {
+        kfree(ptr);
+        return 0;
+    }
+
+    process->mem_allocs[index] = ptr;
+    return ptr;
+}

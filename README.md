@@ -150,10 +150,9 @@ Eventually, I want to move away from the process abstraction.  The Linux Kernel 
 or processes and tasks, and I do not want to either.
 
 ### Userland Functionality
-Currently, you can drop the processor into userland via `process_load` and then a subsequent `task_exec`.  However, there's no
-support for interacting with the kernel from userland and exiting back into kernel code.
+The function `process_load` and `task_exec` is used to move the CPU into user mode.
 
-To drop into userland, you must first load a process with `process_load`.  This will allocate memory for the executable and stack (see `process_load_data`).
+To enter user mode, a process must be loaded with `process_load`.  This will allocate memory for the executable and stack (see `process_load_data`).
 `process_load` will also create and initialize a `task` structure.  In `task_init` ([task.h](src/task/task.h)), 
 we set the hardware context as follows:
 
@@ -193,18 +192,19 @@ was passed to the eax register from the userland program.
 An interface for kernel code to register systems calls, or kernel commands, is provided by `isr80h_register_command`, which is declared in [idt.h](src/idt/idt.h).  Right now, the only point at which I register system calls is `isr80h_register_commands` in [isr80h.h](src/isr80h/isr80h.h).
 
 Misc. kernel commands are stored in [`src/isr80h/misc.h`](./src/isr80h/io.h), and IO related kernel commands are stored in [`src/isr80h/io.h`](./src/isr80h/io.h).
+Memory related system call are declared in [`src/isr80h/heap.h`](./src/isr80h/heap.h).
 
-### User Programs
-User programs are stored in the [user_programs](./user_programs/) folder.  The program `sum_sys`[programs/test_sum_sycall](./programs/test_sum_syscall/) tests the SUM syscall/ kernel command. The program `print_sys` in [user_programs/test_print_syscall/](./user_programs/print/) tests the `PRINT` and `GET_KEY_PRESS` syscall/ kernel commands.
+### User Programs and the Conifer OS C Standard Library
+User programs are stored in the [user_programs](./user_programs/) folder. The example programs here test the stdlib and various ConiferOS system calls.
 
 The [stdlib](./user_programs/stdlib/) folder contains our C standard library, `stdlib.elf`. 
 
-The header, [coniferos.h](./user_programs/stdlib/src/coniferos.h), is the C interface for calling Conifer OS system calls.
+The stdlib contains useful functions for managing heap allocated memory, getting keyboard input, printing, etc.
+It also contains an entry point to C user programs, `start`, which which defines the `_start` symbol and is responsible for calling the `main` function.
 
-The stdlib contains an entry point to user land C programs, `start`,
-which defines the `_start` symbol and is responsible for calling the `main` function.
+See [user_programs/test_stdlib](./user_programs/test_stdlib/) for a program which uses the stdlib.
 
-Other user programs which wish to start with `main` must link to the stdlib and declare their entry point as `_start`. E.g. see [user_programs/test_c_main](./user_programs/test_c_main/).
+Within the stdlib, the [coniferos.h](./user_programs/stdlib/src/coniferos.h), is the C interface for calling Conifer OS system calls.
 
 ### Virtual Keyboard Layer
 Each process structure has a `keyboard_buffer`, which is defined in [process.h](src/task/process.h). An interface for interacting with a process's keyboard

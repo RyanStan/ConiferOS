@@ -8,6 +8,7 @@ enum SystemCalls
     SYSTEM_COMMAND_1_PRINT,
     SYSTEM_COMMAND_2_GET_KEY_PRESS,
     SYSTEM_COMMAND_3_PUT_CHAR_ON_DISPLAY,
+    SYSTEM_COMMAND_4_MALLOC,
 };
 
 /* Registers all kernel commands that are defined in isr80h/misc */

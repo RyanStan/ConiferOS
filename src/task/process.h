@@ -2,6 +2,7 @@
 #define PROCESS_H
 
 #include <stdint.h>
+#include <stddef.h>
 #include "task/task.h"
 #include "config.h"
 #include "keyboard/keyboard.h"
@@ -38,7 +39,6 @@ struct process {
     /* Kernel must keep track of the memory that a process allocates
      * in case the process doesn't free the memory itself.
      * This array contains the addresses of the allocated memory blocks.
-     * TODO: this should ideally be unlimited.
      */
     void *mem_allocs[PROCESS_MAX_ALLOCATIONS];
 
@@ -93,6 +93,15 @@ struct process *get_current_process();
 
 /* Set the process that is currently executing.*/
 void set_current_process(struct process *process);
+
+/* Allocates memory from the kernel's heap and tracks the allocation in the process's mem_alloc array.
+ * Returns 0 on error.
+ *
+ * See note in the implementation about why allocating memory from the kernel's heap for user process's
+ * is a bad idea. This is a hacky approach.
+ *
+ */
+void *process_malloc(struct process *process, size_t size);
 
 
 #endif

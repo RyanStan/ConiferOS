@@ -4,6 +4,7 @@
 
 global print:function
 global get_key:function
+global coniferos_malloc:function
 
 ; void print(const char *filename)
 print:
@@ -23,5 +24,17 @@ get_key:
     mov ebp, esp
     mov eax, 2                      ; Get key press system call
     int 0x80                        ; This system call puts return value in eax, which is what C expects (as defined by ABI, I think)
+    pop ebp
+    ret
+
+; void *coniferos_malloc(size_t size)
+coniferos_malloc:
+    push ebp
+    mov ebp, esp
+    mov eax, 4                      ; Malloc system call
+    push dword[ebp+8]               ; Pushes the size variable to the stack.
+                                    ; This assumes that size_t is dword size (4 bytes) on the build host architecture.
+    int 0x80
+    add esp, 4
     pop ebp
     ret

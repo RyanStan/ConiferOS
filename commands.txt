@@ -7,6 +7,9 @@ How to run with gdb:
 		'add-symbol-file bin/kernel.elf 0x100000'
 		'target remote localhost:1234'
 
+	If debugging one of the user programs, make sure to load that executable's
+	symbol table instead. E.g. `add-symbol-file user_programs/test_stdlib/main.elf 0x400000`
+
 Helpful gdb commands:
 	'layout asm'
 	'info registers'

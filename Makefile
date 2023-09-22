@@ -24,7 +24,7 @@ MODULES = build/kernel.asm.o build/kernel.o \
 	build/task/tss.asm.o build/task/task.o \
 	build/task/process.o build/task/task.asm.o \
 	build/isr80h/isr80h.o build/isr80h/misc.o \
-	build/isr80h/io.o build/keyboard/keyboard.o build/keyboard/ps2_keyboard.o \
+	build/isr80h/io.o build/isr80h/heap.o build/keyboard/keyboard.o build/keyboard/ps2_keyboard.o \
 	build/loader/formats/elf_file.o
 	
 FLAGS = -g -ffreestanding -falign-jumps -falign-functions -falign-labels \
@@ -39,7 +39,7 @@ USER_PROG_2_FOLDER = test_print_syscall
 USER_PROG_2 = print
 USER_PROG_3_FOLDER = test_elf_loader
 USER_PROG_3 = print
-USER_PROG_4_FOLDER = test_c_main
+USER_PROG_4_FOLDER = test_stdlib
 USER_PROG_4 = main
 
 all: user_programs bin/disk.img
@@ -95,6 +95,9 @@ build/isr80h/misc.o: src/isr80h/misc.c
 	i686-elf-gcc -I $(INCLUDES) src/isr80h $(FLAGS) -c $^ -o $@
 
 build/isr80h/io.o: src/isr80h/io.c
+	i686-elf-gcc -I $(INCLUDES) src/isr80h $(FLAGS) -c $^ -o $@
+
+build/isr80h/heap.o: src/isr80h/heap.c
 	i686-elf-gcc -I $(INCLUDES) src/isr80h $(FLAGS) -c $^ -o $@
 
 build/gdt/gdt.asm.o:  src/gdt/gdt.asm
