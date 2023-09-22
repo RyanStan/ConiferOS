@@ -5,4 +5,6 @@
 
 void *isr80h_command_4_malloc(struct interrupt_frame *frame);
 
+void *isr80h_command_5_free(struct interrupt_frame *frame);
+
 #endif

@@ -11,4 +11,6 @@ int get_key();
 
 void *coniferos_malloc(size_t size);
 
+void coniferos_free(void *ptr);
+
 #endif

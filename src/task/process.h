@@ -13,6 +13,15 @@ enum executable_format {
         ELF,
 };
 
+// Tracks a memory allocation made by a process
+struct process_mem_allocation {
+    // ptr to the allocated memory
+    void *ptr;
+
+    // Size of the allocation
+    size_t size;
+};
+
 /* 
  * We're using this concept of processes to encapsulate tasks (i.e. threads).
  * Linux kernel uses the concept of lightweight threads which are still task_struct instances.
@@ -40,7 +49,7 @@ struct process {
      * in case the process doesn't free the memory itself.
      * This array contains the addresses of the allocated memory blocks.
      */
-    void *mem_allocs[PROCESS_MAX_ALLOCATIONS];
+    struct process_mem_allocation mem_allocs[PROCESS_MAX_ALLOCATIONS];
 
     /* The pointer to the memory that the process executable is loaded into.
      * If the process is instantiated from an ELF file, then elf_file will be set. 
@@ -101,7 +110,8 @@ void set_current_process(struct process *process);
  * is a bad idea. This is a hacky approach.
  *
  */
-void *process_malloc(struct process *process, size_t size);
+void *process_malloc_syscall_handler(struct process *process, size_t size);
 
+void process_free_syscall_handler(struct process *process, void *ptr);
 
 #endif

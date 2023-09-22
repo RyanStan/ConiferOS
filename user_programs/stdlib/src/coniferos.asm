@@ -1,10 +1,13 @@
 [BITS 32]
 
+section .asm
+
 ; Assembly interface with Kernel system calls
 
 global print:function
 global get_key:function
 global coniferos_malloc:function
+global coniferos_free:function
 
 ; void print(const char *filename)
 print:
@@ -34,6 +37,17 @@ coniferos_malloc:
     mov eax, 4                      ; Malloc system call
     push dword[ebp+8]               ; Pushes the size variable to the stack.
                                     ; This assumes that size_t is dword size (4 bytes) on the build host architecture.
+    int 0x80
+    add esp, 4
+    pop ebp
+    ret
+
+; void coniferos_free(void *ptr)
+coniferos_free:
+    push ebp
+    mov ebp, esp
+    mov eax, 5                      ; free system call
+    push dword[ebp+8]               ; Pushes the ptr variable to the stack.
     int 0x80
     add esp, 4
     pop ebp

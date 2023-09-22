@@ -10,6 +10,7 @@
 #include "kernel.h"
 #include "loader/formats/elf_file.h"
 #include "loader/formats/elf.h"
+#include <stdbool.h>
 
 /* The current process that is running */
 struct process *current_process = 0;
@@ -294,7 +295,7 @@ void set_current_process(struct process *process)
 static int process_get_free_memory_allocation_slot(struct process *process)
 {
     for (int i = 0; i < PROCESS_MAX_ALLOCATIONS; i++) {
-        if (process->mem_allocs[i] == 0) {
+        if (process->mem_allocs[i].ptr == 0) {
             // the memory allocation slot is free
             return i;
         }
@@ -302,7 +303,7 @@ static int process_get_free_memory_allocation_slot(struct process *process)
     return -ENOMEM;
 }
 
-void *process_malloc(struct process *process, size_t size)
+void *process_malloc_syscall_handler(struct process *process, size_t size)
 {
     /* TODO [RyanStan 09-19-23]  Sharing a memory heap between user processes and the kernel
      * is not a good idea. You could have a user process fragment the heap and cause
@@ -335,6 +336,50 @@ void *process_malloc(struct process *process, size_t size)
         return 0;
     }
 
-    process->mem_allocs[index] = ptr;
+    process->mem_allocs[index].ptr = ptr;
+    process->mem_allocs[index].size = size;
     return ptr;
+}
+
+// Loop through the process's memory allocations and return the process's memory allocation
+// that begins at addr
+static struct process_mem_allocation *get_process_allocation(struct process *process, void *addr)
+{
+    for (int i = 0; i < PROCESS_MAX_ALLOCATIONS; i++) {
+        if (process->mem_allocs[i].ptr == addr) {
+            return &process->mem_allocs[i];
+        }
+    }
+
+    return 0;
+}
+
+void process_free_syscall_handler(struct process *process, void *ptr) 
+{
+
+    // Invalidate the process's page table entries for ptr
+    struct process_mem_allocation *allocation = get_process_allocation(process, ptr);
+    if (!allocation) {
+        // If we did not find a memory allocation associated with ptr, then we should not
+        // do anything. This prevents us from freeing arbitrary memory addresses that user programs
+        // pass to us.
+        return;
+    }
+
+    // Invalidate the process's page table entries which map ptr to memory.
+    // This prevents the process from writing to memory through ptr after ptr has been freed.
+    //
+    // TODO [RyanStan 09-22-23] Being able to read the memory still isn't ideal, but we initialize
+    // the entire's task's page tables to readable with a direct mapping to physical memory anyways. 
+    int rc = paging_create_mapping(process->task->paging, allocation->ptr, allocation->ptr,
+                                paging_align_address(allocation->ptr + allocation->size), 
+                                PAGING_USER_SUPERVISOR | PAGING_PRESENT);
+    if (rc < 0) {
+        return;
+    }
+
+    kfree(ptr);
+
+    allocation->ptr = 0;
+    allocation->size = 0;
 }

@@ -1,19 +1,24 @@
 #include "coniferos.h"
 #include "stdlib.h"
 
-static void test_malloc() {
+static void test_malloc_and_free() {
     void *ptr = malloc(512);
     // TODO [RyanStan 09/22/23] 
     // Use strcpy and print to test this allocation (I haven't implemented these in the stdlib yet)
     if (ptr) {
         print("Memory was allocated\n");
     }
+    free(ptr);
+
+    // Validate that this throws a page fault
+    //char *char_ptr = (char *)ptr;
+    //char_ptr[0] = 'A';
 }
 
 int main(int argc, char **argv)
 {
     print("Hello from main.c!\n");
-    test_malloc();
+    test_malloc_and_free();
 
     for(;;) {
         if (get_key() != 0) {
