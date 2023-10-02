@@ -210,3 +210,7 @@ clean: user_programs_clean
 	rm -rf bin/disk.img
 	rm -rf ./hello.txt
 	
+# Generate a clangd config
+.PHONY: clangd_config
+clangd_config:
+	bear --output compile_commands.json -- ./scripts/build.sh
