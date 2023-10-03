@@ -1,4 +1,4 @@
-FLAGS = -g -ffreestanding -nostdlib -O0 -fpic
+FLAGS = -g -ffreestanding -nostdlib -O0
 PROG = main
 # Files under modules will be built as relocatable ELF files
 MODULES = build/$(PROG).o

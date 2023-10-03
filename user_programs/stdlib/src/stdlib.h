@@ -20,4 +20,9 @@ void *malloc(size_t size);
  */
 void free(void *ptr);
 
+/* Converts a base 10 integer, num, to its (null-terminated) character representation.
+ * This function will store the string in buffer, and will return a pointer to it.
+ */
+char* itoa(int num, char* buffer);
+
 #endif

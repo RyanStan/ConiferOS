@@ -15,9 +15,19 @@ static void test_malloc_and_free() {
     //char_ptr[0] = 'A';
 }
 
+static void test_itoa()
+{
+    char str[12] = {0};
+    itoa(12345, str);
+    print(str);
+    print("\n");
+}
+
 int main(int argc, char **argv)
 {
     print("Hello from main.c!\n");
+    
+    test_itoa();
     test_malloc_and_free();
 
     for(;;) {
