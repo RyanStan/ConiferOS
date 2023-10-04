@@ -1,5 +1,6 @@
 #include "coniferos.h"
 #include "stdlib.h"
+#include "stdio.h"
 
 static void test_malloc_and_free() {
     void *ptr = malloc(512);
@@ -17,16 +18,25 @@ static void test_malloc_and_free() {
 
 static void test_itoa()
 {
+    print("Testing itoa.........\n");
     char str[12] = {0};
     itoa(12345, str);
     print(str);
     print("\n");
 }
 
+static void test_putchar()
+{
+    print("Testing putchar.........\n");
+    putchar('Z');
+    print('\n');
+}
+
 int main(int argc, char **argv)
 {
     print("Hello from main.c!\n");
     
+    test_putchar();
     test_itoa();
     test_malloc_and_free();
 

@@ -13,4 +13,6 @@ void *coniferos_malloc(size_t size);
 
 void coniferos_free(void *ptr);
 
+void coniferos_putchar(char c);
+
 #endif

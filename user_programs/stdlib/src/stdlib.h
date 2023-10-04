@@ -1,5 +1,5 @@
-#ifndef STDLIB_H
-#define STDLIB_H
+#ifndef CONIFEROS_STDLIB_H
+#define CONIFEROS_STDLIB_H
 
 #include <stddef.h>
 

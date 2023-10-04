@@ -1,6 +1,7 @@
 FLAGS = -g -ffreestanding -nostdlib -fpic
+ 
 # Files under modules will be built as relocatable ELF files
-MODULES = build/start.o build/coniferos.o build/stdlib.o
+MODULES = build/start.o build/coniferos.o build/stdlib.o build/stdio.o
 LIBRARY = stdlib
 INCLUDES = ./src
 
@@ -15,6 +16,9 @@ build/coniferos.o: ./src/coniferos.asm
 	nasm -f elf ./src/coniferos.asm -o ./build/coniferos.o
 
 build/stdlib.o: ./src/stdlib.c
+	i686-elf-gcc -I ./ -I $(INCLUDES) $(FLAGS) -c $^ -o $@
+
+build/stdio.o: ./src/stdio.c
 	i686-elf-gcc -I ./ -I $(INCLUDES) $(FLAGS) -c $^ -o $@
 
 clean: 

@@ -1,7 +1,7 @@
 FLAGS = -g -ffreestanding -nostdlib -O0
 PROG = main
 # Files under modules will be built as relocatable ELF files
-MODULES = build/$(PROG).o
+MODULES = ./build/$(PROG).o
 STDLIB = ../stdlib/stdlib.elf
 INCLUDES = ../stdlib/src
 
@@ -13,5 +13,5 @@ build/$(PROG).o: ./$(PROG).c
 	i686-elf-gcc -I ./ -I $(INCLUDES) $(FLAGS) -c $^ -o $@
 
 clean: 
-	rm -f .$(MODULES)
+	rm -f $(MODULES)
 	rm -f ./$(PROG).elf
