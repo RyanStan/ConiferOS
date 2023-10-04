@@ -1,0 +1,31 @@
+{
+    "configurations": [
+        {
+            "name": "debug stdlib_test",
+            "type": "gdb",
+            "request": "attach",
+            "executable": "user_programs/test_stdlib/main.elf",
+            "target": "localhost:1234",
+            "remote": true,
+            "cwd": "${workspaceRoot}", 
+            "gdbpath": "gdb",
+            "autorun": [
+                    "add-symbol-file user_programs/test_stdlib/main.elf 0x400000",
+                ]
+        },
+        {
+            "name": "debug kernel",
+            "type": "gdb",
+            "request": "attach",
+            "executable": "bin/kernel.elf",
+            "target": "localhost:1234",
+            "remote": true,
+            "cwd": "${workspaceRoot}", 
+            "gdbpath": "gdb",
+            "autorun": [
+                    "add-symbol-file bin/kernel.elf 0x100000",
+                ]
+        }
+    ],
+    "version": "2.0.0"
+}
