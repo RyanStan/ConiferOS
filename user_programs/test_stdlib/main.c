@@ -32,6 +32,11 @@ static void test_putchar()
     print('\n');
 }
 
+static void test_printf()
+{
+    printf("This is a %s test. Here is a random integer: %i\n", "printf", 10);
+}
+
 int main(int argc, char **argv)
 {
     print("Hello from main.c!\n");
@@ -39,6 +44,7 @@ int main(int argc, char **argv)
     test_putchar();
     test_itoa();
     test_malloc_and_free();
+    test_printf();
 
     for(;;) {
         if (get_key() != 0) {
