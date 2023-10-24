@@ -5,7 +5,7 @@ section .asm
 ; Assembly interface with Kernel system calls
 
 global print:function
-global get_key:function
+global coniferos_get_key:function
 global coniferos_malloc:function
 global coniferos_free:function
 global coniferos_putchar:function
@@ -22,8 +22,8 @@ print:
     pop ebp
     ret
 
-; int get_key()
-get_key:
+; int coniferos_get_key()
+coniferos_get_key:
     push ebp
     mov ebp, esp
     mov eax, 2                      ; Get key press system call

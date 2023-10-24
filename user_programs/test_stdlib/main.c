@@ -40,6 +40,8 @@ static void test_printf()
 int main(int argc, char **argv)
 {
     print("Hello from main.c!\n");
+    char buf[1024];
+    coniferos_terminal_readline(buf, 1024);
     
     test_putchar();
     test_itoa();
@@ -47,7 +49,7 @@ int main(int argc, char **argv)
     test_printf();
 
     for(;;) {
-        if (get_key() != 0) {
+        if (coniferos_get_key() != 0) {
             print("Key was pressed\n");
         }
     }

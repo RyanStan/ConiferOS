@@ -88,7 +88,6 @@ void keyboard_backspace(struct process *process)
 char keyboard_pop()
 {
     // Pop from the current task's process's keyboard buffer. 
-    // TODO: I'm not sure why push uses the current process but pop uses the current task. I guess I'll find out.
 
     struct task *task = get_current_task();
     if (!task)
