@@ -131,16 +131,14 @@ void kernel_main()
 
 	isr80h_register_commands();
 
-	run_smoke_tests();
-
-	print("Welcome to ConiferOS\n");
+	// run_smoke_tests();
 
 	keyboard_init();
 
 	struct process *process = 0;
-	int rc = process_load("0:/main.elf", &process);
+	int rc = process_load("0:/shell.elf", &process);
 	if (rc < 0)
-		panic("Failed to load 0:/main.elf\n");
+		panic("Failed to load 0:/shell.elf\n");
 
 	// enable_interrupts(); TODO: task run code expects interrupts to be disabled...
 

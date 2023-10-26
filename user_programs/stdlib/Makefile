@@ -1,6 +1,5 @@
 FLAGS = -g -ffreestanding -nostdlib -fpic
  
-# Files under modules will be built as relocatable ELF files
 MODULES = build/start.o build/coniferos.asm.o build/coniferos.o build/stdlib.o build/stdio.o
 LIBRARY = stdlib
 INCLUDES = ./src
