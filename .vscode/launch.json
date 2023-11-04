@@ -4,13 +4,13 @@
             "name": "debug stdlib_test",
             "type": "gdb",
             "request": "attach",
-            "executable": "user_programs/test_stdlib/main.elf",
+            "executable": "user_programs/test_stdlib/tstlib.elf",
             "target": "localhost:1234",
             "remote": true,
             "cwd": "${workspaceRoot}", 
             "gdbpath": "gdb",
             "autorun": [
-                    "add-symbol-file user_programs/test_stdlib/main.elf 0x400000",
+                    "add-symbol-file user_programs/test_stdlib/tstlib.elf 0x400000",
                 ]
         },
         {

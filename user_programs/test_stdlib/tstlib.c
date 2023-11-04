@@ -1,6 +1,8 @@
 #include "coniferos.h"
 #include "stdlib.h"
 #include "stdio.h"
+#include "string.h"
+#include "memory.h"
 
 static void test_malloc_and_free() {
     void *ptr = malloc(512);
@@ -37,16 +39,30 @@ static void test_printf()
     printf("This is a %s test. Here is a random integer: %i\n", "printf", 10);
 }
 
+static void test_strtok()
+{
+    print("Testing strtok\n");
+    const char str[] = "ConiferOS C standard library";
+
+    char token_buf[1024];
+    const char *token = strtok(str, ' ', token_buf);
+    while (token != NULL) {
+        printf("Token: %s\n", token);
+        memset(token_buf, 0, sizeof(token_buf));
+        token = strtok(NULL, ' ', token_buf);
+    }
+    print("End of strtok test\n");
+}
+
 int main(int argc, char **argv)
 {
     print("Hello from the standard library test!\n");
-    char buf[1024];
-    coniferos_terminal_readline(buf, 1024);
     
     test_putchar();
     test_itoa();
     test_malloc_and_free();
     test_printf();
+    test_strtok();
 
     for(;;) {
         if (coniferos_get_key() != 0) {

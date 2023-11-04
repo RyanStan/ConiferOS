@@ -119,3 +119,33 @@ char *strncpy(char* dest, const char* src, size_t n)
         dest[i] = 0x00;
         return dest;
 }
+
+char *strtok(char *str, const char delim, char *out_tok)
+{
+        static char *remainder = 0;
+        if (str != 0) {
+                remainder = str;
+        }
+
+        if (remainder == 0) {
+                return 0;
+        }
+
+        char next_token[strlen(str)];
+
+        int i = 0;
+        while (remainder[i] != '\0') {
+                if (remainder[i] == delim) {
+                        out_tok[i] = '\0';
+                        remainder = remainder + i + 1;
+                        return out_tok;
+                }
+
+                out_tok[i] = remainder[i];
+                i++;
+        }
+
+        out_tok[i] = '\0';
+        remainder = 0;
+        return out_tok;
+}

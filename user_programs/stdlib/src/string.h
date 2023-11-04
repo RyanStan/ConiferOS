@@ -54,4 +54,31 @@ int strnicmp(const char *s1, const char *s2, size_t n);
  */
 char *strncpy(char* dest, const char* src, size_t n);
 
+/* Extract tokens from strings
+ *
+ * Description from the C standard library man page for strtok:
+ *
+ * The strtok() function breaks a string into a sequence of zero or
+       more nonempty tokens.  On the first call to strtok(), the string
+       to be parsed should be specified in str.  In each subsequent call
+       that should parse the same string, str must be NULL.
+
+       The delim argument specifies a set of bytes that delimit the
+       tokens in the parsed string.  The caller may specify different
+       strings in delim in successive calls that parse the same string.
+
+       Each call to strtok() returns a pointer to a null-terminated
+       string containing the next token.  This string does not include
+       the delimiting byte.  If no more tokens are found, strtok()
+       returns NULL.
+
+* There are two differences between the strtok here and the strtok that's defined in the POSIX standards
+ * - delim is only a single character.
+ * - users are required to pass in a buffer, out_tok, that we can write the result token to.
+ * 
+ * TODO [RyanStank 11-4-23] Once we have user space malloc, we can remove out_tok and just allocate the returned token
+ *                          on the heap.
+ */
+char *strtok(char *str, const char delim, char *out_tok);
+
 #endif
