@@ -1,5 +1,5 @@
 FLAGS = -g -ffreestanding -nostdlib -O0
-PROG = main
+PROG = tstlib
 MODULES = ./build/$(PROG).o
 STDLIB = ../stdlib/stdlib.elf
 INCLUDES = ../stdlib/src

@@ -9,6 +9,7 @@ global coniferos_get_key:function
 global coniferos_malloc:function
 global coniferos_free:function
 global coniferos_putchar:function
+global coniferos_exec:function
 
 ; void print(const char *filename)
 print:
@@ -72,3 +73,14 @@ coniferos_putchar:
                                     ; Thought I'd write this down to save it somewhere, in case I come back to this project years from now and need
                                     ; to remember how to debug issues.
                                     ; Maybe I should add it to the readme instead, under a debug section...
+
+; void coniferos_exec(const char *filename)
+coniferos_exec:
+    push ebp
+    mov ebp, esp
+    mov eax, 6                      ; exec system call
+    push dword[ebp+8]               ; push the 'const char *filename' arg onto the stack
+    int 0x80
+    add esp, 4
+    pop ebp
+    ret        

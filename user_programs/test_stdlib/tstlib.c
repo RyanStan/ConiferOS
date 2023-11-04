@@ -39,7 +39,7 @@ static void test_printf()
 
 int main(int argc, char **argv)
 {
-    print("Hello from main.c!\n");
+    print("Hello from the standard library test!\n");
     char buf[1024];
     coniferos_terminal_readline(buf, 1024);
     

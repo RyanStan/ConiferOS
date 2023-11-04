@@ -24,8 +24,9 @@ MODULES = build/kernel.asm.o build/kernel.o \
 	build/task/tss.asm.o build/task/task.o \
 	build/task/process.o build/task/task.asm.o \
 	build/isr80h/isr80h.o build/isr80h/misc.o \
-	build/isr80h/io.o build/isr80h/heap.o build/keyboard/keyboard.o build/keyboard/ps2_keyboard.o \
-	build/loader/formats/elf_file.o
+	build/isr80h/io.o build/isr80h/heap.o build/isr80h/process.o \
+	build/keyboard/keyboard.o build/keyboard/ps2_keyboard.o \
+	build/loader/formats/elf_file.o 
 	
 FLAGS = -g -ffreestanding -falign-jumps -falign-functions -falign-labels \
 	-falign-loops -fstrength-reduce -fomit-frame-pointer \
@@ -40,7 +41,7 @@ USER_PROG_2 = print
 USER_PROG_3_FOLDER = test_elf_loader
 USER_PROG_3 = print
 USER_PROG_4_FOLDER = test_stdlib
-USER_PROG_4 = main
+USER_PROG_4 = tstlib
 USER_PROG_5_FOLDER = shell
 USER_PROG_5 = shell
 
@@ -101,6 +102,9 @@ build/isr80h/io.o: src/isr80h/io.c
 	i686-elf-gcc -I $(INCLUDES) src/isr80h $(FLAGS) -c $^ -o $@
 
 build/isr80h/heap.o: src/isr80h/heap.c
+	i686-elf-gcc -I $(INCLUDES) src/isr80h $(FLAGS) -c $^ -o $@
+
+build/isr80h/process.o: src/isr80h/process.c
 	i686-elf-gcc -I $(INCLUDES) src/isr80h $(FLAGS) -c $^ -o $@
 
 build/gdt/gdt.asm.o:  src/gdt/gdt.asm

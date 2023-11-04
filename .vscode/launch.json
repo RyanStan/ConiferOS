@@ -14,6 +14,19 @@
                 ]
         },
         {
+            "name": "debug shell",
+            "type": "gdb",
+            "request": "attach",
+            "executable": "user_programs/shell/shell.elf",
+            "target": "localhost:1234",
+            "remote": true,
+            "cwd": "${workspaceRoot}", 
+            "gdbpath": "gdb",
+            "autorun": [
+                    "add-symbol-file user_programs/shell/build/shell.elf 0x400000",
+                ]
+        },
+        {
             "name": "debug kernel",
             "type": "gdb",
             "request": "attach",

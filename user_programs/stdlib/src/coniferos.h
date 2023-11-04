@@ -28,4 +28,10 @@ void coniferos_putchar(char c);
  */
 int coniferos_terminal_readline(char *out, int max);
 
+/* Exec system call.
+ * Constructs a process image from the file and replaces the currently executing process with the new process.
+ * This function will return once the process terminates.
+ */
+void coniferos_exec(const char *filename);
+
 #endif

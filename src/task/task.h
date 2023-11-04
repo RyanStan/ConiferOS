@@ -92,7 +92,7 @@ void task_current_save_state(struct interrupt_frame *frame);
 
 /* Copy a string from userland (task's address space) to the kernel's address space.
  * This function must be called from kernel land.
- * This function relies on the fact that the kernel page table's linearly map the whole physical address space.
+ * This function relies on the fact that the kernel page table's linearly map the entire physical address space.
  *
  *  task_virt_addr - A userland virtual address that is mapped to some value via task's page tables.  
  *                   Kernel mode code cannot directly see the value at this address since it is mapped to a physical address

@@ -1,6 +1,6 @@
 FLAGS = -g -ffreestanding -nostdlib -fpic
  
-MODULES = build/start.o build/coniferos.asm.o build/coniferos.o build/stdlib.o build/stdio.o
+MODULES = build/start.o build/coniferos.asm.o build/coniferos.o build/stdlib.o build/stdio.o build/string.o
 LIBRARY = stdlib
 INCLUDES = ./src
 
@@ -21,6 +21,9 @@ build/stdlib.o: ./src/stdlib.c
 	i686-elf-gcc -I ./ -I $(INCLUDES) $(FLAGS) -c $^ -o $@
 
 build/stdio.o: ./src/stdio.c
+	i686-elf-gcc -I ./ -I $(INCLUDES) $(FLAGS) -c $^ -o $@
+
+build/string.o: ./src/string.c
 	i686-elf-gcc -I ./ -I $(INCLUDES) $(FLAGS) -c $^ -o $@
 
 clean: 
