@@ -1,7 +1,7 @@
 #ifndef SHELL_H
 #define SHELL_H
 
-#define MAX_CMMD_ARG_LEN 512
+#define MAX_CMMD_ARG_LEN 128
 
 struct command_token {
     char token[MAX_CMMD_ARG_LEN];

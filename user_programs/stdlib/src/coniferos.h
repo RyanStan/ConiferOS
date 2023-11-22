@@ -31,7 +31,11 @@ int coniferos_terminal_readline(char *out, int max);
 /* Exec system call.
  * Constructs a process image from the file and replaces the currently executing process with the new process.
  * This function will return once the process terminates.
+ * 
+ * argv contains pointers to the command line arguments, and must be null-terminated.
+ * 
+ * TODO [RyanStan 11-15-23] remove the argc argument
  */
-void coniferos_exec(const char *filename);
+void coniferos_execve(const char *filename, const char *argv[], const int argc);
 
 #endif

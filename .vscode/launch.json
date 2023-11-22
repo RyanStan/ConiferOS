@@ -1,5 +1,6 @@
 {
     "configurations": [
+
         {
             "name": "debug stdlib_test",
             "type": "gdb",
@@ -24,6 +25,19 @@
             "gdbpath": "gdb",
             "autorun": [
                     "add-symbol-file user_programs/shell/build/shell.elf 0x400000",
+                ]
+        },
+        {
+            "name": "debug echo",
+            "type": "gdb",
+            "request": "attach",
+            "executable": "user_programs/echo/build/echo.elf",
+            "target": "localhost:1234",
+            "remote": true,
+            "cwd": "${workspaceRoot}", 
+            "gdbpath": "gdb",
+            "autorun": [
+                    "add-symbol-file user_programs/echo/build/echo.elf 0x400000",
                 ]
         },
         {

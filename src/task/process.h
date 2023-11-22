@@ -8,6 +8,8 @@
 #include "keyboard/keyboard.h"
 #include "loader/formats/elf_file.h"
 
+#define MAX_CMMD_ARG_LEN 32
+
 enum executable_format {
         BINARY,
         ELF,
@@ -87,6 +89,12 @@ struct process {
         int head;
         int tail;
     } keyboard_buffer;
+
+    // Number of arguments passed to this process when load process was called
+    int argc;
+
+    // Kernel space memory address of where the process's arguments (null terminated character arrays, aka strings) are stored.
+    char **argv;
 };
  
 /* Loads the executable given by filename into memory, and generates a process
@@ -113,5 +121,8 @@ void set_current_process(struct process *process);
 void *process_malloc_syscall_handler(struct process *process, size_t size);
 
 void process_free_syscall_handler(struct process *process, void *ptr);
+
+// argv and the corresponding strings must be dynamically allocated on the kernel heap
+int process_load_with_args(const char *filename, struct process **process, int argc, char *argv[]);
 
 #endif

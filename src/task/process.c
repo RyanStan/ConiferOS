@@ -12,6 +12,11 @@
 #include "loader/formats/elf.h"
 #include <stdbool.h>
 
+// The arguments passed to a function must be mapped into the address space of that process.
+// This value is the maximum amount of memory (bytes) that we allocate for storing the arguments to a process.
+// 256 characters seems plenty for now. Since max command arg len is 32, this should fit 256 / 32 args.
+#define MAX_ARG_MEMORY 256
+
 /* The current process that is running */
 struct process *current_process = 0;
 
@@ -139,8 +144,8 @@ static int process_map_task_elf(struct process *process)
     return rc;
 }
 
-/* This function maps the process's executable memory (containing executable binary file or elf file)
- * and the stack into the page tables of the process's task.
+/* This function maps the process's executable memory (containing executable binary file or elf file), 
+ * the stack, and command-line arguments, into the page tables of the process's task.
  *
  */
 int process_map_task_memory(struct process *process)
@@ -151,6 +156,13 @@ int process_map_task_memory(struct process *process)
                                     PAGING_PRESENT | PAGING_USER_SUPERVISOR | PAGING_READ_WRITE);
     if (rc < 0)
         return rc;
+
+    // Map the command line arguments into task's page tables as read-only
+    // rc = paging_create_mapping(process->task->paging, (void*)COMMAND_LINE_ARG_VIRTUAL_ADDR, process->arg_start,
+    //                                 paging_align_address(process->arg_start + MAX_ARG_MEMORY), 
+    //                                 PAGING_PRESENT | PAGING_USER_SUPERVISOR);
+    // if (rc < 0)
+    //     return rc;
 
     // Map the executable's physical address into task's page tables.
     switch (process->format)
@@ -196,7 +208,7 @@ void process_free(struct process *process)
 /* Load the process into the given slot in processes array 
  * Loads the pointer to the new process struct into process parameter (hence why it's a double pointer).
  */
-int process_load_for_slot(const char *filename, struct process **process, int pid)
+int process_load_for_slot(const char *filename, struct process **process, int pid, int argc, char *argv[])
 {
     int rc = 0;
 
@@ -223,9 +235,42 @@ int process_load_for_slot(const char *filename, struct process **process, int pi
         goto out;
     }
 
+    //argc = 5; hardcoding just so that I can test accessing this value in user space.
+    if (argc == 0) {
+        argv = 0;
+    }
+
+    // Have to put things on the end of the stack
+    void *process_stack_flipped = (char *)process_stack_ptr + TASK_STACK_SIZE - 4; // why does this equal 0x1827000
+    *(int *)process_stack_flipped = argc;
+
+    process_stack_flipped = (char *)process_stack_ptr + TASK_STACK_SIZE - 8;
+    *(char **)process_stack_flipped = (char *)argv; 
+
+
+    // Put argc on the program's stack. --> print(*(int*)process_stack_ptr) this worked
+    *(int *)process_stack_ptr = argc;
+
+    // Advance the pointer by four bytes 
+    void *process_stack_next_word_ptr = (char *)process_stack_ptr + 4; // Yep, this worked. 0x140e000 to 0x140e004. Byte addressable memory so this makes sense.
+
+    // Put argv on the program's stack.
+    // The casting here became very confusing. The intent is to just put the pointer value of argv
+    // into the memory at process_stack_next_word_ptr.
+    *(char **)process_stack_next_word_ptr = (char *)argv;  // print(*(char**)process_stack_next_word_ptr) --> this works!
+
+    // TODO: the user process won't be able to access this memory anyways.... so maybe not the right thing to do.
+    // Either way, maybe this is a good test.
+
+    // Linux + the system V ABI put the actual character arrays on the stack as well, but that's more complicated,
+    // so I'm not doing that here.
+
     strncpy(_process->filename, filename, sizeof(_process->filename));
     _process->stack_addr = process_stack_ptr;
     _process->pid = pid;
+
+    _process->argc = argc;
+    _process->argv = argv;
 
     /* Create a task */
     struct task *task = task_new(_process);
@@ -265,6 +310,16 @@ int process_get_free_slot()
     return -EISTAKEN;
 }
 
+int process_load_with_args(const char *filename, struct process **process, int argc, char *argv[])
+{
+    int pid = process_get_free_slot();
+    if (pid < 0) {
+        print("Could not load process.  Already at max processes.\n");
+        return -EISTAKEN;
+    }
+
+    return process_load_for_slot(filename, process, pid, argc, argv);
+}
 
 int process_load(const char *filename, struct process **process)
 {
@@ -274,8 +329,7 @@ int process_load(const char *filename, struct process **process)
         return -EISTAKEN;
     }
         
-
-    return process_load_for_slot(filename, process, pid);
+    return process_load_for_slot(filename, process, pid, 0, NULL);
 }
 
 void set_current_process(struct process *process)

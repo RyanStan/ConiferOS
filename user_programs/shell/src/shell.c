@@ -24,6 +24,11 @@ int main(int argc, char **argv)
     return 0;
 }
 
+/* TODO [RyanStan 11-5-23]
+ * Finish logic to parse arguments.
+ * Meh it's actually probably worth it to finish this... or how would I do it via stack?
+ * Hmm the kernel would put args on stack
+ */
 struct command_token *parse_command(const char *command, int command_len)
 {
     struct command_token *root_command = 0;

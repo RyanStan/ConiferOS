@@ -28,6 +28,10 @@
 #define TASK_STACK_SIZE             1024 * 16
 #define TASK_STACK_VIRT_ADDR        0x3FF000                                /* Default stack pointer address for new process.  4096 B below ip. */
 #define TASK_STACK_VIRT_ADDR_END    TASK_STACK_VIRT_ADDR - TASK_STACK_SIZE  /* Stack grows downards, so the end address is less than the start*/
+#define COMMAND_LINE_ARG_VIRTUAL_ADDR 0x02000000                              /* I chose a random value. From what I can tell, the Linux Kernel
+                                                                               * stores command line strings (the char arrays) at the beginning of a process's memory map.
+                                                                               * These are stored in a memory region outside the stack and the heap
+                                                                               */
 
 /*
  * https://wiki.osdev.org/Segment_Selector - structure of segment registers

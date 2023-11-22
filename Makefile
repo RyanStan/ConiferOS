@@ -44,6 +44,8 @@ USER_PROG_4_FOLDER = test_stdlib
 USER_PROG_4 = tstlib
 USER_PROG_5_FOLDER = shell
 USER_PROG_5 = shell
+USER_PROG_6_FOLDER = echo
+USER_PROG_6 = echo
 
 all: user_programs bin/disk.img
 
@@ -60,6 +62,7 @@ bin/disk.img: bin/os.bin
 	sudo cp ./user_programs/$(USER_PROG_3_FOLDER)/$(USER_PROG_3).elf /mnt/d
 	sudo cp ./user_programs/$(USER_PROG_4_FOLDER)/$(USER_PROG_4).elf /mnt/d
 	sudo cp ./user_programs/$(USER_PROG_5_FOLDER)/build/$(USER_PROG_5).elf /mnt/d
+	sudo cp ./user_programs/$(USER_PROG_6_FOLDER)/build/$(USER_PROG_6).elf /mnt/d
 	sudo umount /mnt/d
 
 # os.bin is a concatenation of the boot binary and the kernel binary.
@@ -199,6 +202,7 @@ user_programs:
 	cd ./user_programs/$(USER_PROG_3_FOLDER) && $(MAKE) all
 	cd ./user_programs/$(USER_PROG_4_FOLDER) && $(MAKE) all
 	cd ./user_programs/$(USER_PROG_5_FOLDER) && $(MAKE) all
+	cd ./user_programs/$(USER_PROG_6_FOLDER) && $(MAKE) all
 
 # Clean userland programs
 .PHONY: user_programs_clean
@@ -209,6 +213,7 @@ user_programs_clean:
 	cd ./user_programs/$(USER_PROG_3_FOLDER) && $(MAKE) clean
 	cd ./user_programs/$(USER_PROG_4_FOLDER) && $(MAKE) clean
 	cd ./user_programs/$(USER_PROG_5_FOLDER) && $(MAKE) clean
+	cd ./user_programs/$(USER_PROG_6_FOLDER) && $(MAKE) clean
 
 .PHONY: clean
 clean: user_programs_clean
