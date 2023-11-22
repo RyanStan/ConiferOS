@@ -10,7 +10,7 @@ enum SystemCalls
     SYSTEM_COMMAND_3_PUT_CHAR_ON_DISPLAY,
     SYSTEM_COMMAND_4_MALLOC,
     SYSTEM_COMMAND_5_FREE,
-    SYSTEM_COMMAND_6_EXEC,
+    SYSTEM_COMMAND_6_EXECVE,
 };
 
 /* Registers all kernel commands that are defined in isr80h/misc */

@@ -24,6 +24,11 @@ int main(int argc, char **argv)
     return 0;
 }
 
+/* TODO [RyanStan 11-5-23]
+ * Finish logic to parse arguments.
+ * Since I'm passing arguments as strings on the stack, I don't need the command_token
+ * structure anymore.
+ */
 struct command_token *parse_command(const char *command, int command_len)
 {
     struct command_token *root_command = 0;

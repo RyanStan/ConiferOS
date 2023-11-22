@@ -204,7 +204,20 @@ It also contains an entry point to C user programs, `start`, which which defines
 
 See [user_programs/test_stdlib](./user_programs/test_stdlib/) for a program which uses the stdlib.
 
-Within the stdlib, the [coniferos.h](./user_programs/stdlib/src/coniferos.h), is the C interface for calling Conifer OS system calls.
+### User space program execution
+User programs can launch other programs and pass them arguments by using the ConiferOS exec system calls.
+As an example, see the following code from [user_programs/test_stdlib/test_stdlib.c](./user_programs/test_stdlib/tstlib.c):
+```
+    char path_buf[1024];
+    strcpy(path_buf, "0:/echo.elf");
+    char *args[] = {
+        "first_argument",
+        NULL
+    };
+    coniferos_execve(path_buf, args, /*argc*/1);
+```
+I implemented the "echo" user space program to showcase command line arguments.
+
 
 ### Virtual Keyboard Layer
 Each process structure has a `keyboard_buffer`, which is defined in [process.h](src/task/process.h). An interface for interacting with a process's keyboard

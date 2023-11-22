@@ -29,7 +29,9 @@ insw:
 
 	pop ebp			; set ebp to caller's frame pointer value
 	ret
-	
+
+
+; void outb(unsigned short port, unsigned char val)
 outb:
 	push ebp		; preserve caller's frame pointer
 	mov ebp, esp		; create new frame pointer pointing to current stack top

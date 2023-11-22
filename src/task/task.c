@@ -104,7 +104,8 @@ static int task_init(struct task *task, struct process *process)
 
     task->registers.ss = USER_DATA_SEGMENT;
     task->registers.cs = USER_CODE_SEGMENT;
-    task->registers.esp = TASK_STACK_VIRT_ADDR;
+    task->registers.esp = TASK_STACK_VIRT_ADDR - 8; // We subtract 8 to make room for argc and argv, since these go above the stack pointer
+                                                    // when we initialize a process. Argc will be at [esp] and argv will be at [esp+4]
 
     task->process = process;
     
@@ -182,6 +183,7 @@ void task_current_save_state(struct interrupt_frame *frame)
     task->registers.ss = frame->ss;
 }
 
+
 int copy_string_from_user_task(struct task *task, void *task_virt_addr, void *kernel_virt_addr, int max)
 {
     if (max >= PAGING_PAGE_SIZE)
@@ -247,4 +249,9 @@ void *task_get_stack_item(struct task *task, int index)
     swap_kernel_page_tables();
 
     return task_stack_item;
+}
+
+void* task_virtual_address_to_physical(struct task* task, void* virtual_address)
+{
+    return paging_get_physical_address(task->paging->pgd, virtual_address);
 }

@@ -94,4 +94,7 @@ void *paging_align_to_lower_page(void *addr);
  */
 uint32_t paging_get_pte(uint32_t *task_page_directory, void *virt_addr);
 
+// Given a page directory entry, convert the virt_addr into its corresponding phyical address
+void* paging_get_physical_address(uint32_t* task_page_directory, void* virt_addr);
+
 #endif

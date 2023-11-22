@@ -10,6 +10,7 @@ global coniferos_malloc:function
 global coniferos_free:function
 global coniferos_putchar:function
 global coniferos_exec:function
+global coniferos_execve:function
 
 ; void print(const char *filename)
 print:
@@ -83,4 +84,17 @@ coniferos_exec:
     int 0x80
     add esp, 4
     pop ebp
-    ret        
+    ret
+
+; void coniferos_execve(const char *filename, const char *argv[], const int argc)
+coniferos_execve:
+    push ebp
+    mov ebp, esp
+    mov eax, 6                      ; exec system call
+    push dword[ebp+8]               ; Push filename onto the stack
+    push dword[ebp+12]              ; Push argv onto the stack
+    push dword[ebp+16]              ; Push argc onto the stack 
+    int 0x80
+    add esp, 12
+    pop ebp
+    ret

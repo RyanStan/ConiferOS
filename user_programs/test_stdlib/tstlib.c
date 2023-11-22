@@ -54,15 +54,28 @@ static void test_strtok()
     print("End of strtok test\n");
 }
 
+void test_exec_with_args() 
+{
+    char path_buf[1024];
+    strcpy(path_buf, "0:/echo.elf");
+    char *args[] = {
+        "first_argument",
+        NULL
+    };
+    coniferos_execve(path_buf, args, 1);
+}
+
 int main(int argc, char **argv)
 {
     print("Hello from the standard library test!\n");
-    
+    /*
     test_putchar();
     test_itoa();
     test_malloc_and_free();
     test_printf();
     test_strtok();
+    */
+    test_exec_with_args();
 
     for(;;) {
         if (coniferos_get_key() != 0) {

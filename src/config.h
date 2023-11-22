@@ -28,6 +28,12 @@
 #define TASK_STACK_SIZE             1024 * 16
 #define TASK_STACK_VIRT_ADDR        0x3FF000                                /* Default stack pointer address for new process.  4096 B below ip. */
 #define TASK_STACK_VIRT_ADDR_END    TASK_STACK_VIRT_ADDR - TASK_STACK_SIZE  /* Stack grows downards, so the end address is less than the start*/
+#define TASK_STACK_VIRT_ADDR_END_NICE 0x3FB000                               /* Not used - just for quick reference */
+#define COMMAND_LINE_ARG_VIRTUAL_ADDR 0x02000000                              /* I chose a random value. Linux follows the System V ABI for i386 and puts
+                                                                               * arg strings on a process's stack in the "info block".
+                                                                               * Instead, I decided to map them into a predetermined place to make setting up
+                                                                               * the process's argv easier.
+                                                                               */
 
 /*
  * https://wiki.osdev.org/Segment_Selector - structure of segment registers
@@ -45,5 +51,9 @@
 #define MAX_ISR80H_COMMANDS         1024
 
 #define KEYBOARD_BUFFER_SIZE        1024
+
+#define MAX_CMMD_ARG_LEN            32
+
+#define MAX_NUM_ARGS                5
 
 #endif

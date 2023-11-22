@@ -3,8 +3,10 @@
 
 #include "idt/idt.h"
 
-// Exec system call. Accepts a file name argument. Loads the file's process image into memory
+// Exec system call. Accepts a file name argument and a list of char pointers that represent
+// the command-line arguments.
+// Loads the file's process image into memory
 // and then executes it in user mode.
-void *isr80h_command_6_exec(struct interrupt_frame *frame);
+void *isr80h_command_6_execve(struct interrupt_frame *frame);
 
 #endif
