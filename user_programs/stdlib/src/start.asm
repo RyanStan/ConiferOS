@@ -7,15 +7,16 @@ section .asm
 
 _start:
     ; We are going to call the main function.
-    ; We need to take argc and argv from the stack frame that the kernel
-    ; created for this process, and pass them to the main function as arguments.
+    ; When the kernel initializes a process, it loads argc into [esp]
+    ; and argv into [esp + 4]. Here, we take these values and pass them
+    ; to the main function as arguments.
     
     ; Push argv (esp+8) onto the stack
-    mov eax, [esp + 8]
+    mov eax, [esp + 4]
     push eax
 
     ; Push argc (esp+4) onto the stack
-    mov eax, [esp + 4]
+    mov eax, [esp]
     push eax
 
     call main

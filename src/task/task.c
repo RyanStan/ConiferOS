@@ -104,7 +104,8 @@ static int task_init(struct task *task, struct process *process)
 
     task->registers.ss = USER_DATA_SEGMENT;
     task->registers.cs = USER_CODE_SEGMENT;
-    task->registers.esp = TASK_STACK_VIRT_ADDR;
+    task->registers.esp = TASK_STACK_VIRT_ADDR - 8; // We subtract 8 to make room for argc and argv, since these go above the stack pointer
+                                                    // when we initialize a process. Argc will be at [esp] and argv will be at [esp+4]
 
     task->process = process;
     
