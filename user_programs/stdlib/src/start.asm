@@ -13,10 +13,10 @@ _start:
     
     ; Push argv (esp+8) onto the stack
     mov eax, [esp + 4]
-    push eax
+    push eax ; did this decrement esp? --> yeah it will. 
 
     ; Push argc (esp+4) onto the stack
-    mov eax, [esp]
+    mov eax, [esp + 4]
     push eax
 
     call main

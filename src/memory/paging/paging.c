@@ -166,3 +166,10 @@ uint32_t paging_get_pte(uint32_t *task_page_directory, void *virt_addr)
         uint32_t *page_table = (uint32_t*)(page_directory_entry & PGD_ENTRY_TABLE_ADDR);
         return page_table[table_index];
 }
+
+void* paging_get_physical_address(uint32_t* task_page_directory, void* virt_addr)
+{
+    void* virt_addr_aligned = (void*) paging_align_to_lower_page(virt_addr);
+    void* difference = (void*)((uint32_t) virt_addr - (uint32_t) virt_addr_aligned);
+    return (void*)((paging_get_pte(task_page_directory, virt_addr_aligned) & 0xfffff000) + difference);
+}

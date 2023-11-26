@@ -7,8 +7,7 @@
 #include "kernel.h"
 #include "string/string.h"
 #include "memory/heap/kernel_heap.h"
-
-#define MAX_CMMD_ARG_LEN 32
+#include "config.h"
 
 int copy_argv_pointers_from_user_task(struct task *task, char *argv_usr_addr[], char *kernel_argv[], int argc);
 
@@ -38,7 +37,7 @@ void *isr80h_command_6_execve(struct interrupt_frame *frame)
     }
 
     struct process *process = 0;
-    int rc = process_load_with_args(filename, &process, argc, argv); // Everything here is good!
+    int rc = process_load_with_args(filename, &process, argc, argv);
     if (rc < 0) {
         return 0;
     }
@@ -53,6 +52,9 @@ void *isr80h_command_6_execve(struct interrupt_frame *frame)
  * 
  * After this function has been called, kernel_argv will contain the (kernel accessible) array of char pointers.
  * These char pointers point to strings which must also be mapped into kernel space. See copy_string_from_user_task.
+ * 
+ * TODO [RyanStan 11-24-23] It would be easier to convert the user space argv into a physical address,
+ *                          that way I don't need to switch into user space to access the array of arg char pointers.
 */
 int copy_argv_pointers_from_user_task(struct task *task, char *argv_usr_addr[], char *kernel_argv[], int argc)
 {
@@ -89,3 +91,6 @@ int copy_argv_pointers_from_user_task(struct task *task, char *argv_usr_addr[], 
 
     return 0;
 }
+
+// Todo: there might be an easier way...
+// just convert their argv into a physical addr with function

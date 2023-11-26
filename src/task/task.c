@@ -250,3 +250,8 @@ void *task_get_stack_item(struct task *task, int index)
 
     return task_stack_item;
 }
+
+void* task_virtual_address_to_physical(struct task* task, void* virtual_address)
+{
+    return paging_get_physical_address(task->paging->pgd, virtual_address);
+}

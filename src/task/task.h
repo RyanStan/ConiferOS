@@ -115,4 +115,8 @@ int copy_string_from_user_task(struct task *task, void *task_virt_addr, void *ke
  */
 void *task_get_stack_item(struct task *task, int index);
 
+// Return the physical address associated with the task's virtual address
+void* task_virtual_address_to_physical(struct task* task, void* virtual_address);
+
+
 #endif

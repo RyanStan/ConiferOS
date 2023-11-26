@@ -11,11 +11,8 @@
 #include "loader/formats/elf_file.h"
 #include "loader/formats/elf.h"
 #include <stdbool.h>
-
-// The arguments passed to a function must be mapped into the address space of that process.
-// This value is the maximum amount of memory (bytes) that we allocate for storing the arguments to a process.
-// 256 characters seems plenty for now. Since max command arg len is 32, this should fit 256 / 32 args.
-#define MAX_ARG_MEMORY 256
+#include "process.h"
+#include "config.h"
 
 /* The current process that is running */
 struct process *current_process = 0;
@@ -156,13 +153,13 @@ int process_map_task_memory(struct process *process)
                                     PAGING_PRESENT | PAGING_USER_SUPERVISOR | PAGING_READ_WRITE);
     if (rc < 0)
         return rc;
-
-    // Map the command line arguments into task's page tables as read-only
-    // rc = paging_create_mapping(process->task->paging, (void*)COMMAND_LINE_ARG_VIRTUAL_ADDR, process->arg_start,
-    //                                 paging_align_address(process->arg_start + MAX_ARG_MEMORY), 
-    //                                 PAGING_PRESENT | PAGING_USER_SUPERVISOR);
-    // if (rc < 0)
-    //     return rc;
+    
+    int len_arg_block = MAX_CMMD_ARG_LEN * MAX_NUM_ARGS + sizeof(char*) * MAX_NUM_ARGS;
+    rc = paging_create_mapping(process->task->paging, (void *)COMMAND_LINE_ARG_VIRTUAL_ADDR, process->arg_block,
+                                    paging_align_address(process->arg_block + len_arg_block),
+                                    PAGING_PRESENT | PAGING_USER_SUPERVISOR | PAGING_READ_WRITE);
+    if (rc < 0)
+        return rc;
 
     // Map the executable's physical address into task's page tables.
     switch (process->format)
@@ -205,6 +202,109 @@ void process_free(struct process *process)
         kfree(process->stack_addr);
 }
 
+// Given an address from the arg block of memory, translate it to its userspace equivalent.
+// For example, if the kernel allocates memory at 0x0F for a process, but 
+// maps arg block memory to 0xA in user space, then the kernel will translate 0x0F to 0x0A.
+void* translate_arg_block_addr_to_userspace_addr(void *addr, void *arg_block) 
+{
+    if ((uint32_t)addr < (uint32_t)arg_block) {
+        // Invalid input
+        return 0;
+    }
+
+    uint32_t diff = (uint32_t)addr - (uint32_t)arg_block;
+    return (void *)((uint32_t)COMMAND_LINE_ARG_VIRTUAL_ADDR + diff);
+}
+
+// Load a process's stack with argc, argv, and load the argument strings into the correct places
+// in the stack.
+void load_process_stack_memory_with_args(void *process_stack_ptr, int argc, char *argv[])
+{
+    // Since the stack grows downward, a process's esp register will point
+    // at the end of the allocated stack memory after the process is initialized by the kernel.
+    // This is why we must put the arguments at the end of the stack memory.
+    // TODO: we'll have to put the esp register below all of this now....
+    // maybe I can shove all the argv stuff from the beginning of the stack memory, and not
+    // change the way this works!
+
+    void *argc_location = (char *)process_stack_ptr + TASK_STACK_SIZE - 4;
+    *(int *)argc_location = argc;
+    //void *argv_location = (char *)process_stack_ptr + TASK_STACK_SIZE - 8;
+
+    // TODO: put argv and argc at the beginning of process_stack_ptr, not the end! meh that might mess things up?
+    // Idk. Maybe I do want to allocate memory,and just hardcode argv
+
+    // This is the array of char pointers, each of which is a pointer to an argument
+    char **argv_char_array_location = (char **)((char *)process_stack_ptr + TASK_STACK_SIZE - 12); // this will be the value of argv
+
+    //*(char **)argv_location = (void *)translate_stack_addr_to_userspace_addr((void *)argv_char_array_location);
+    
+    // This is a pointer to the first args string (character array)
+    char *arg_strings_location = (char *)(argv_char_array_location + MAX_CMMD_ARG_LEN + 1); // The 1 is a safety bumper
+
+    /* This code is complicated, here's a break-down.
+     *
+     * args_string_location is a pointer to the beginning of memory where we'll store 
+     * the argument strings, which are sequences of null-terminated chars. Thus, args_string_location is a pointer
+     * to a character.
+     * 
+     * argv_char_array_location is a pointer to the memory where we store the array of argument string pointers.
+     * Argv will point to this memory. Thus, argv will take on the value argv_char_array_location.
+     * 
+     * Here, we copy the strings referenced by argv[i] into args_string_location. 
+     * Then, we update argv_char_array_location with the address of the beginning of the string.
+     * 
+     * We have to make sure that the addresses in argv and argv_char_array are translated to
+     * the userspace equivalent, since the stack memory is mapped into TASK_STACK_VIRT_ADDR.
+     * 
+     * TODO: walk through this code in debugger and make sure I got it right, before implementing translation
+     * function
+     *
+    */
+    for (int i = 0; i < argc; i++) {
+        int arg_len = strnlen(argv[i], MAX_CMMD_ARG_LEN);
+        strcpy(arg_strings_location, argv[i]);
+        //argv_char_array_location[i] = (char*)translate_stack_addr_to_userspace_addr(arg_strings_location);
+        arg_strings_location += arg_len + 5; // The 5 is a safety bumper 
+    }
+
+    return;
+}
+
+// Given a pointer to a process's stack, which is of size TASK_STACK_SIZE bytes,
+// place argc and argv into the end of that memory, so that a process may access
+// those values through its stack pointer.
+void put_argv_argc_in_stack_mem(void *process_stack_ptr, int argc, char *argv[])
+{
+    // Since the stack grows downward, a process's esp register will point
+    // at the end of the allocated stack memory after the process is initialized by the kernel.
+    // This is why we must put the arguments at the end of the stack memory.
+
+    void *process_stack_flipped = (char *)process_stack_ptr + TASK_STACK_SIZE - 4;
+    *(int *)process_stack_flipped = argc;
+
+    // Put argc on the program's stack. --> print(*(int*)process_stack_ptr) ... does ths work?
+    process_stack_flipped = (char *)process_stack_ptr + TASK_STACK_SIZE - 8;
+    *(char **)process_stack_flipped = (char *)argv;
+}
+
+void load_arg_block(void *arg_block, int argc, char *argv[])
+{
+   char **user_argv = (char **)arg_block;
+   char *arg_strings = (char *)(user_argv + MAX_NUM_ARGS); // incrementing arg strings should increment address by four bytes per unit (user arg points to points)
+
+    for (int i = 0; i < argc; i++) {
+        //int arg_len = strnlen(argv[i], MAX_CMMD_ARG_LEN);
+        print(argv[i]);
+        print("  -->processed that arg \n");
+        strcpy(arg_strings, argv[i]);
+        print(arg_strings);
+        print("  -->arg strings had this value \n"); // I hvae the right values.... hmm I'll need the debugger to work. save it for next week
+        user_argv[i] = (char*)translate_arg_block_addr_to_userspace_addr(arg_strings, arg_block);
+        arg_strings += MAX_CMMD_ARG_LEN;
+    }
+}
+
 /* Load the process into the given slot in processes array 
  * Loads the pointer to the new process struct into process parameter (hence why it's a double pointer).
  */
@@ -240,37 +340,21 @@ int process_load_for_slot(const char *filename, struct process **process, int pi
         argv = 0;
     }
 
-    // Have to put things on the end of the stack
-    void *process_stack_flipped = (char *)process_stack_ptr + TASK_STACK_SIZE - 4; // why does this equal 0x1827000
-    *(int *)process_stack_flipped = argc;
-
-    process_stack_flipped = (char *)process_stack_ptr + TASK_STACK_SIZE - 8;
-    *(char **)process_stack_flipped = (char *)argv; 
-
-
-    // Put argc on the program's stack. --> print(*(int*)process_stack_ptr) this worked
-    *(int *)process_stack_ptr = argc;
-
-    // Advance the pointer by four bytes 
-    void *process_stack_next_word_ptr = (char *)process_stack_ptr + 4; // Yep, this worked. 0x140e000 to 0x140e004. Byte addressable memory so this makes sense.
-
-    // Put argv on the program's stack.
-    // The casting here became very confusing. The intent is to just put the pointer value of argv
-    // into the memory at process_stack_next_word_ptr.
-    *(char **)process_stack_next_word_ptr = (char *)argv;  // print(*(char**)process_stack_next_word_ptr) --> this works!
-
-    // TODO: the user process won't be able to access this memory anyways.... so maybe not the right thing to do.
-    // Either way, maybe this is a good test.
-
-    // Linux + the system V ABI put the actual character arrays on the stack as well, but that's more complicated,
-    // so I'm not doing that here.
+    //load_process_stack_memory_with_args(process_stack_ptr, argc, argv);
+    put_argv_argc_in_stack_mem(process_stack_ptr, argc, /*argv*/(void *)COMMAND_LINE_ARG_VIRTUAL_ADDR);
+    _process->argc = argc;
+    _process->argv = argv;
 
     strncpy(_process->filename, filename, sizeof(_process->filename));
     _process->stack_addr = process_stack_ptr;
     _process->pid = pid;
 
-    _process->argc = argc;
-    _process->argv = argv;
+    _process->arg_block = kzalloc(MAX_CMMD_ARG_LEN * MAX_NUM_ARGS + sizeof(char*) * MAX_NUM_ARGS);
+    if (!_process->arg_block) {
+        rc = -ENOMEM;
+        goto out;
+    }
+    load_arg_block(_process->arg_block, _process->argc, _process->argv);
 
     /* Create a task */
     struct task *task = task_new(_process);
