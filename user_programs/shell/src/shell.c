@@ -7,28 +7,40 @@
 
 #define MAX_COMMAND_LEN 1024
 
-int main(int argc, char **argv) 
-{
-    printf("ConiferOS v0.0.1\n");
-    for (;;) {
-        printf("> ");
-        char path_buf[1024];
-        const char *path_prefix = "0:/";                // Hardcoding the path prefix
-        int len_path_prefix = strlen(path_prefix);
+// Generates a null terminated array of arguments from the command_token list.
+// This returned array can be passed to the coniferos_execve function.
+// This function will also populate arg_count with the count of arguments.
+char **create_argv_array(struct command_token *command, int *arg_count) {
+    struct command_token *itr = command;
 
-        strncpy(path_buf, "0:/", len_path_prefix);
-        coniferos_terminal_readline(path_buf + len_path_prefix, sizeof(path_buf) - len_path_prefix);
+    if (!itr)
+        return 0;
 
-        coniferos_exec(path_buf);
+    itr = itr->next;
+    int count = 0;
+    while (itr != 0) {
+        count++;
+        itr = itr->next;
     }
-    return 0;
+
+    char **argv = (char**)malloc((count + 1) * sizeof(char *));
+    if (!argv) {
+        printf("shell.c: ERROR: could not allocate memory for argv");
+        return 0;
+    }
+
+    itr = command->next;
+    for (int i = 0; i < count; i++) {
+        argv[i] = itr->token;
+        itr = itr->next;
+    }
+
+    argv[count] = NULL;
+
+    *arg_count = count;
+    return argv;
 }
 
-/* TODO [RyanStan 11-5-23]
- * Finish logic to parse arguments.
- * Since I'm passing arguments as strings on the stack, I don't need the command_token
- * structure anymore.
- */
 struct command_token *parse_command(const char *command, int command_len)
 {
     struct command_token *root_command = 0;
@@ -70,4 +82,32 @@ struct command_token *parse_command(const char *command, int command_len)
     }
 
     return root_command;
+}
+
+int main(int argc, char **argv) 
+{
+    printf("ConiferOS shell v0.0.1\n");
+    printf("-----------------------\n");
+    printf("ConiferOS doesn't provide a 'fork' or 'waitpid' system call, so the executed command will replace the shell process.\n");
+    printf("-----------------------\n");
+    printf("Try executing 'ECHO.ELF HELLO'\n");
+    printf("-----------------------\n\n");
+
+    for (;;) {
+        printf("> ");
+
+        char path_buf[MAX_COMMAND_LEN];
+        const char *path_prefix = "0:/";                // Hardcoding the path prefix
+        int len_path_prefix = strlen(path_prefix);
+        strncpy(path_buf, "0:/", len_path_prefix);
+        coniferos_terminal_readline(path_buf + len_path_prefix, sizeof(path_buf) - len_path_prefix);
+
+        struct command_token *root = parse_command(path_buf, MAX_COMMAND_LEN);
+
+        int argc = 0;
+        const char **argv = create_argv_array(root, &argc);
+
+        coniferos_execve(root->token, argv, argc);
+    }
+    return 0;
 }

@@ -1,19 +1,20 @@
 # ConiferOS
-This is the OS I'm building as I follow along with
+I built the foundation of this operating system by following along with
 the Udemy course, "Developing a Multithreaded Kernel From Scratch", 
 by Daniel McCarthy.
 
 This kernel is built on a QEMU x86 System emulator.  
 You can find the emulated hardware specs here: [i440fx PC](https://www.qemu.org/docs/master/system/i386/pc.html).
 
+<img src="./misc/shell_screenshot.png">
+
 ## How to Run
-### System Setup
+### Setup
 - `sudo apt upgrade`
 - `sudo apt install nasm`
 - `sudo apt install qemu-system-x86`
 - Download binutils into `$HOME/src`
 - Download gcc into `$HOME/src`
-- Clone the repo
 - `scripts/install_gcc_deps.sh`
 - `scripts/build_binutils.sh`
 - `scripts/build_gcc.sh`
@@ -21,19 +22,17 @@ You can find the emulated hardware specs here: [i440fx PC](https://www.qemu.org/
 - `scripts/build.sh`
 - `make run`
 
-At some point, I want to simplify this process.  It's somewhat redundant.
-
 ## Overview
 
 ### Booting
 The BIOS will load the boot sector into memory and execute it.
 Our FAT (File Allocation Table filesystem) boot sector is defined by [boot.asm](src/boot/boot.asm) and gets written to the first sector in our disk image.
 
-Our bootloader does two main things: enter protected mode and load our kernel (100 sectors of the disk, 1 KB) into memory at 0x0100000 and then jump to it.
+The bootloader enters protected mode and loads the kernel (100 sectors of the disk, 1 KB) into memory at 0x0100000 and then jumps to it.
 
 ### The Kernel Entry Point
 Once the kernel is in memory, the first function to execute is
-`_start` in [kernel.asm](src/kernel.asm).  From here, I call kernel_main
+`_start` in [kernel.asm](src/kernel.asm).  From here, I call `kernel_main``
 which is in [kernel.c](src/kernel.c).  
 
 ### Interupts
@@ -115,7 +114,7 @@ by providing a disk stream interface.  This is the foundation for filesystem dri
 
 ### The Virtual Filesystem Layer
 Much like how Linux provides a virtual file system independent of the underlying 
-filesystem implementation, [file.h](src/fs/file.h), allows for filesystems to be dynamically inserted at runtime
+filesystem implementation, [file.h](src/fs/file.h) allows for filesystems to be dynamically inserted at runtime
 (see `fs_insert_filesystem`).  These dynamically inserted filesystems must conform to the 
 `filesystem` struct.  This means they must provide several functions like `fs_open`, `resolve`, `fs_read`, etc.
 The `resolve` function is especially important: when initializing disks, the disk code will attempt to resolve each
@@ -124,30 +123,29 @@ a filesystem implementation to a given disk.
 
 ### FAT Filesystem
 The FAT filesystem is the only filesystem I've implemented so far.  See [fat16.h](src/fs/fat/fat16.h).  
-One very important thing to keep in mind with FAT16: Filename lengths have a strict limit: 8 characters for everything
+One important thing to remember with FAT16: Filename lengths have a strict limit: 8 characters for everything
 before the `.`, and 3 characters for the extension.  Forgetting this fact has caused me lots of pain numerous times.
 
 ### GDT
 The GDT is loaded into memory and initially configured with Code and Data segments in [boot.asm](src/boot/boot.asm).
 However, since the GDT must be modified again down the road, and interface for interacting with the GDT is provided in 
-[gdt.h](src/gdt/gdt.h).  Much like the Linux Kernel, ConiferOS doesn't make explicity use of segmentation, 
+[gdt.h](src/gdt/gdt.h).  Much like the Linux Kernel, ConiferOS doesn't make explicit use of segmentation, 
 and instead has kernel/user code and data segments share the entire address space.
 
 ### Processes and Tasks
 A task is the CPU schedulable unit in ConiferOS.  The task structure is defined in [task.h](src/task/task.h).
 Each task has it's own set of page tables.  All runnable tasks are stored together in a linked list structure.
-A task structure also maintains its hardware context - registers.  When we begin execution of a task, we load
-the values from registers structure into the hardware registers before calling iretd to drop into userland.
+The task structure is also responsible for maintaing a task's hardware context;  when we begin execution of a task, we load
+the values from the registers structure into the hardware registers before calling `iretd`` to drop into userland.
 
-A task is owned by a process.  For now, a process only owns one task, but the intent was that a process
+A task is owned by a process.  For now, a process only owns a single task, but the intent was that a process
 can eventually own multiple process.  The process structure is defined in [process.h](src/task/process.h).
 
-When a user attempts to load an executable with `process_load`, a process will be created which contains reference to that executable (`filename`).
+When a user loads an executable with `process_load`, a process image will be created from the specified executeable (`filename`).
 Binary executables and ELF executables are supported.  When the kernel initializes a process, it will allocate space for the executable and the stack,
 and will map that memory into the page tables of the task that the process encapsulates. For example, see `process_map_task_memory` in [process.c](src/task/process.c).
 
-Eventually, I want to move away from the process abstraction.  The Linux Kernel does not differentiate between processes and threads,
-or processes and tasks, and I do not want to either.
+Eventually, I want to move away from the process abstraction.  The Linux Kernel does not differentiate between processes and tasks, and I do not want to either.
 
 ### Userland Functionality
 The function `process_load` and `task_exec` is used to move the CPU into user mode.
@@ -175,10 +173,9 @@ by modifying the CR3 register, and then will move the task's saved registers' va
 will call `iretd` to drop into userland.  This will set the code segment and data segment selector registers to map the user code and user data
 segments.  The values for these segments are defined in [kernel.c](src/kernel.c) (see `/* Set up the GDT */`).
 
-One other interesting thing worth noting.  When we switch to the task's page tables, before we call `iretd`, we can still
-access the correct kernel code memory, because in `task_init`, we do a one to one mapping of physical memory to virtual addresses.
-However, at that point, we can only read the kernel memory, not write it. I would like to see how the Linux Kernel handles this small
-transition gap, from kernel code having swapped the current page tables, to when the user process actually begins executing.
+When we switch to the task's page tables, before we call `iretd`, we can still
+access the correct kernel code memory because in `task_init`, we do a one to one mapping of physical memory to virtual addresses.
+However, at that point, we can only read the kernel memory, not write it.
 
 ### Userland to Kernel Communication (int 0x80)
 The interrupt 0x80 is used to communicate with the kernel from userland.  The userland program will put a command ID into the eax register,
@@ -195,7 +192,7 @@ Misc. kernel commands are stored in [`src/isr80h/misc.h`](./src/isr80h/io.h), an
 Memory related system call are declared in [`src/isr80h/heap.h`](./src/isr80h/heap.h).
 
 ### User Programs and the Conifer OS C Standard Library
-User programs are stored in the [user_programs](./user_programs/) folder. The example programs here test the stdlib and various ConiferOS system calls.
+User programs are stored in the [user_programs](./user_programs/) folder. The example programs here test the stdlib and ConiferOS system calls.
 
 The [stdlib](./user_programs/stdlib/) folder contains our C standard library, `stdlib.elf`. 
 
@@ -277,8 +274,6 @@ does not support relocatable files or dynamic shared libraries.
 
 ELF Specification that was used as reference: https://refspecs.linuxfoundation.org/elf/elf.pdf
 
-### Build
-TODO: add section on linker script
 
 ## What's Next?
 There are several things I want to experiment with:
@@ -286,9 +281,8 @@ There are several things I want to experiment with:
 - A dynamic device driver layer so that the kernel can support interacting with different hardware by loading in different drivers at runtime.
 - Making the heap allocation algorithm more efficient.  Right now, it's a fragmented mess. 
 - I'd like to implement an ext filesystem.
-- It would be neat to run the OS on bare-metal. I'd have to find an old machine and disk drive.
-- The Kernel land code currently disables interrupts whenever it executes, because there aren't any
-  safety mechanisms in place to support interleaving.  I would like to add some support for concurrency controls
-  for kernel land code.
+- The Kernel code disables interrupts because there aren't any
+  safety mechanisms to support interleaved execution of functions. I'd like to implement some synchronization
+  and concurrency primitives to support this.
 - A PCI driver so I can dynamically find attached devices. Then I don't have to guess I/O port addresses.
 - `mmap` function to map files into memory.
