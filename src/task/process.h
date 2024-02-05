@@ -17,7 +17,11 @@ enum executable_format {
 
 // Tracks a memory allocation made by a process
 struct process_mem_allocation {
-    // ptr to the allocated memory
+    /* ptr to the allocated memory.
+     *
+     * This is the address of the memory from the
+     * kernel's view, and not the user program's view.
+    */
     void *ptr;
 
     // Size of the allocation
@@ -130,5 +134,12 @@ void process_free_syscall_handler(struct process *process, void *ptr);
 int process_load_with_args(const char *filename, struct process **process, int argc, char *argv[]);
 
 void put_argv_argc_in_stack_mem(void * process_stack_ptr, int argc, char * argv[]);
+
+/* Frees the memory associated with the process
+ * and unlinks it from the schedulable process list.
+ * If the process was the currently executing process, then we
+ * must run task_next() to execute the next task/process.
+ */
+int process_terminate(struct process *process);
 
 #endif

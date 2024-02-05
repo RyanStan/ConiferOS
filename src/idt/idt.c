@@ -4,6 +4,7 @@
 #include "print/print.h"		// TODO: make some sort of include folder so I don't have to use relative paths in includes
 #include "io/io.h"
 #include "kernel.h"
+#include "task/process.h"
 #include "task/task.h"
 #include <stdint.h>
 #include "status.h"
@@ -48,7 +49,6 @@ void idt_zero()
 	print("Divide by zero error\n");
 }
 
-
 /*
  * idt_set - set the ith entry in the idt with the given handler function
  *
@@ -65,6 +65,23 @@ void idt_set(int i, void *handler)
 	entry->offset_2 = (uint32_t)handler >> 16;
 }
 
+void idt_handle_user_process_exception()
+{
+	// TODO [RyanStan 02-05-2024] It's a bad idea to assume that all exceptions come from
+	// user programs.
+	process_terminate(get_current_process());
+
+	task_exec(task_get_next());
+}
+
+// Interrupt vectors 0-32 are internal CPU exceptions
+void register_handler_for_exceptions()
+{
+	for (int i = 0; i < 0x20; i++) {
+		idt_register_interrupt_handler(i, idt_handle_user_process_exception);
+	}
+}
+
 void idt_init()
 {
 	memset(idt, 0, sizeof(idt));	
@@ -79,6 +96,8 @@ void idt_init()
 	// Overwrite handler for the interrupts which require special handling
 	idt_set(0, idt_zero);
 	idt_set(0x80, isr80h_wrapper);
+
+	register_handler_for_exceptions();
 
 	/* Load the interrupt descriptor table */
 	idt_load(&idtr);

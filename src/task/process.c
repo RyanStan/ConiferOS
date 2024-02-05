@@ -177,11 +177,9 @@ int process_map_task_memory(struct process *process)
     return rc;
 }
 
-/* Free the kernel heap memory allocated for process */
+/* Free the kernel heap memory allocated for and by the process */
 void process_free(struct process *process)
 {
-    // TODO: make sure to free any left over memory_allocations as well
-
     switch (process->format)
     {
         case ELF:
@@ -200,6 +198,16 @@ void process_free(struct process *process)
 
     if (process->stack_addr)
         kfree(process->stack_addr);
+
+
+    // Free memory allocations.
+    // Since we're terminating the process, we don't need to unlink these allocations from the process's
+    // page tables.
+    for (int i = 0; i < PROCESS_MAX_ALLOCATIONS; i++) {
+        if (process->mem_allocs[i].ptr != 0) {
+            kfree(process->mem_allocs[i].ptr);
+        }
+    }
 }
 
 // Given an address from the arg block of memory, translate it to its userspace equivalent.
@@ -475,7 +483,6 @@ static struct process_mem_allocation *get_process_allocation(struct process *pro
 
 void process_free_syscall_handler(struct process *process, void *ptr) 
 {
-
     // Invalidate the process's page table entries for ptr
     struct process_mem_allocation *allocation = get_process_allocation(process, ptr);
     if (!allocation) {
@@ -501,4 +508,13 @@ void process_free_syscall_handler(struct process *process, void *ptr)
 
     allocation->ptr = 0;
     allocation->size = 0;
+}
+
+int process_terminate(struct process *process)
+{
+    process_free(process);
+
+    processes[process->pid] = 0;
+
+    return 0;
 }
