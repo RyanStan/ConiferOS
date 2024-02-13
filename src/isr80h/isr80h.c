@@ -14,4 +14,5 @@ void isr80h_register_commands()
     isr80h_register_command(SYSTEM_COMMAND_4_MALLOC, isr80h_command_4_malloc);
     isr80h_register_command(SYSTEM_COMMAND_5_FREE, isr80h_command_5_free);
     isr80h_register_command(SYSTEM_COMMAND_6_EXECVE, isr80h_command_6_execve);
+    isr80h_register_command(SYSTEM_COMMAND_7_EXIT, isr80h_command_7_exit);
 }

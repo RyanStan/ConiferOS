@@ -11,6 +11,7 @@ global coniferos_free:function
 global coniferos_putchar:function
 global coniferos_exec:function
 global coniferos_execve:function
+global coniferos_exit:function
 
 ; void print(const char *filename)
 print:
@@ -96,5 +97,14 @@ coniferos_execve:
     push dword[ebp+16]              ; Push argc onto the stack 
     int 0x80
     add esp, 12
+    pop ebp
+    ret
+
+; void coniferos_exit()
+coniferos_exit:
+    push ebp
+    mov ebp, esp
+    mov eax, 7                      ; exit system call
+    int 0x80
     pop ebp
     ret

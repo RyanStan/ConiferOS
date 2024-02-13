@@ -11,6 +11,7 @@ enum SystemCalls
     SYSTEM_COMMAND_4_MALLOC,
     SYSTEM_COMMAND_5_FREE,
     SYSTEM_COMMAND_6_EXECVE,
+    SYSTEM_COMMAND_7_EXIT,
 };
 
 /* Registers all kernel commands that are defined in isr80h/misc */

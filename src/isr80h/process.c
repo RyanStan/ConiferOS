@@ -91,3 +91,10 @@ int copy_argv_pointers_from_user_task(struct task *task, char *argv_usr_addr[], 
 
     return 0;
 }
+
+void *isr80h_command_7_exit(struct interrupt_frame *frame)
+{
+    process_terminate(get_current_process());
+    task_exec(task_get_next());
+    return 0;
+}

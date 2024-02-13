@@ -88,8 +88,6 @@ int main(int argc, char **argv)
 {
     printf("ConiferOS shell v0.0.1\n");
     printf("-----------------------\n");
-    printf("ConiferOS doesn't provide a 'fork' or 'waitpid' system call, so the executed command will replace the shell process.\n");
-    printf("-----------------------\n");
     printf("Try executing 'ECHO.ELF HELLO'\n");
     printf("-----------------------\n\n");
 

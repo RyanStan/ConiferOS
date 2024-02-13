@@ -71,7 +71,7 @@ void idt_handle_user_process_exception()
 	// user programs.
 	process_terminate(get_current_process());
 
-	task_exec(task_get_next());
+ 	task_exec(task_get_next());
 }
 
 // Interrupt vectors 0-32 are internal CPU exceptions

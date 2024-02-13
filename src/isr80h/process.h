@@ -9,4 +9,7 @@
 // and then executes it in user mode.
 void *isr80h_command_6_execve(struct interrupt_frame *frame);
 
+// exit - cause normal process termination
+void *isr80h_command_7_exit(struct interrupt_frame *frame);
+
 #endif

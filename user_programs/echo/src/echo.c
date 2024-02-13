@@ -9,14 +9,9 @@
 
 int main(int argc, char *argv[]) 
 {
-    printf("\nWelcome to echo\n");
-    printf("There are %i arguments. Arguments separated by newline:\n", argc);
     for (int i = 0; i < argc; i++) {
+        printf("\n");
         printf(argv[i]);
-        printf("\n------------\n");
     }
-
-    for (;;) {
-
-    }
+    printf("\n");
 }

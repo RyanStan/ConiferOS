@@ -2,6 +2,7 @@
 
 global _start
 extern main
+extern coniferos_exit
 
 section .asm
 
@@ -24,5 +25,5 @@ _start:
     ; Clean up the stack
     add esp, 8
 
-    ; TODO [RyanStan 11-19-23] Implement an exit routine, and handle user program exits from the kernel
+    call coniferos_exit
     ret

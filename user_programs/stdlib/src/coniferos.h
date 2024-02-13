@@ -38,4 +38,7 @@ int coniferos_terminal_readline(char *out, int max);
  */
 void coniferos_execve(const char *filename, const char *argv[], const int argc);
 
+// exit - cause normal process termination
+void coniferos_exit();
+
 #endif
