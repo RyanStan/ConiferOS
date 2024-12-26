@@ -1,0 +1,9 @@
+# This target allows us to link this library against the kernel C code producted
+# by the i686-elf-gcc cross-compiler.
+[build]
+target = "i686-unknown-none.json"
+
+[unstable]
+# The following flags tell Cargo to build standard library components from source.
+build-std = ["core", "alloc", "compiler_builtins"]
+build-std-features = ["compiler-builtins-mem"]

@@ -26,8 +26,8 @@ MODULES = build/kernel.asm.o build/kernel.o \
 	build/isr80h/isr80h.o build/isr80h/misc.o \
 	build/isr80h/io.o build/isr80h/heap.o build/isr80h/process.o \
 	build/keyboard/keyboard.o build/keyboard/ps2_keyboard.o \
-	build/loader/formats/elf_file.o 
-	
+	build/loader/formats/elf_file.o
+
 FLAGS = -g -ffreestanding -falign-jumps -falign-functions -falign-labels \
 	-falign-loops -fstrength-reduce -fomit-frame-pointer \
 	-finline-functions -Wno-unused-function -fno-builtin \
@@ -46,6 +46,11 @@ USER_PROG_5_FOLDER = shell
 USER_PROG_5 = shell
 USER_PROG_6_FOLDER = echo
 USER_PROG_6 = echo
+
+# Testing out Rust integration. I may write new features in Rust going forward.
+RUST_LIB_DIR = rust-coniferos/target/i686-unknown-none/debug
+RUST_LIB = -l:librust_coniferos.a
+RUST_LIB_FILE = $(RUST_LIB_DIR)/librust_coniferos.a
 
 all: user_programs bin/disk.img
 
@@ -72,10 +77,13 @@ bin/os.bin: bin/boot.bin bin/kernel.bin
 	dd if=/dev/zero bs=1048576 count=16 >> bin/os.bin # Fills up rest of disk with 16, 1 MB sized blocks of zeros (this will be used by Linux to store our file data)
 
 # kernel.bin is the binary file which contains all the kernel code
-bin/kernel.bin: $(MODULES)
-	i686-elf-gcc $(FLAGS) -ffreestanding -O0 -nostdlib  -T src/linker.ld $(MODULES) -o bin/kernel.elf 
+bin/kernel.bin: $(MODULES) $(RUST_LIB_FILE)
+	i686-elf-gcc $(FLAGS) -ffreestanding -O0 -nostdlib  -T src/linker.ld $(MODULES) -L$(RUST_LIB_DIR) $(RUST_LIB) -o bin/kernel.elf
 	i686-elf-objcopy -O binary bin/kernel.elf bin/kernel.bin
-	
+
+$(RUST_LIB_FILE):
+	cd rust-coniferos && cargo build --target x86_64-unknown-none
+
 # boot.bin contains our bootloader code, and is what loads the kernel into memory.
 bin/boot.bin: src/boot/boot.asm
 	nasm -f bin $^ -o $@
@@ -219,15 +227,19 @@ user_programs_clean:
 	cd ./user_programs/$(USER_PROG_5_FOLDER) && $(MAKE) clean
 	cd ./user_programs/$(USER_PROG_6_FOLDER) && $(MAKE) clean
 
+.PHONY: rust_clean
+rust_clean:
+	cd rust-coniferos && cargo clean
+
 .PHONY: clean
-clean: user_programs_clean
+clean: user_programs_clean rust_clean
 	rm -rf bin/boot.bin
 	rm -rf bin/kernel.bin
 	rm -rf bin/os.bin
 	rm -rf ${MODULES}
 	rm -rf bin/disk.img
 	rm -rf ./hello.txt
-	
+
 # Generate a clangd config
 .PHONY: clangd_config
 clangd_config:
