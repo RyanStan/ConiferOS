@@ -17,6 +17,7 @@
 #include "config.h"
 #include "isr80h/isr80h.h"
 #include "keyboard/keyboard.h"
+#include "rust_interface/rust_coniferos.h"
 
 /* Set up the GDT */
 struct tss tss;
@@ -57,15 +58,15 @@ void run_smoke_tests()
 	if (root_path)
 		print("Parse path worked\n");
 
-	/* Test disk streamer 
+	/* Test disk streamer
 	 * View disk image binary and confirm that values read into c are correct
 	 */
-	struct disk_stream *disk_stream = get_disk_stream(0);			
+	struct disk_stream *disk_stream = get_disk_stream(0);
 	int rc = disk_stream_seek(disk_stream, 0x201);
 	if (rc < 0)
 		print("Error on disk_stream_seek\n");
 	unsigned char c = 0;
-	rc = disk_stream_read(disk_stream, &c, 1); 		
+	rc = disk_stream_read(disk_stream, &c, 1);
 
 	unsigned char c_buf[4];
 	rc = disk_stream_seek(disk_stream, 511);
@@ -77,7 +78,7 @@ void run_smoke_tests()
 	/* VFS and FAT16 */
 	int fd = fopen("0:/hello.txt", "r");
 	if (fd < 0) {
-		print("Error opening file\n");	
+		print("Error opening file\n");
 	} else {
 		print("We opened '0:/hello.txt'\n");
 		int length = strlen("Hello World");
@@ -109,7 +110,7 @@ void kernel_main()
 
 	memset(gdt_raw, 0x00, sizeof(gdt_raw));
 	segment_descriptor_to_raw(gdt_raw, gdt, TOTAL_GDT_SEGMENTS);
-	gdt_load(gdt_raw, sizeof(gdt_raw));	
+	gdt_load(gdt_raw, sizeof(gdt_raw));
 
 	kernel_heap_init();
 
@@ -142,9 +143,18 @@ void kernel_main()
 		panic("Failed to load 0:/shell.elf\n");
 		//panic("Failed to load 0:/tstlib.elf\n");
 	}
-		
+
 
 	// enable_interrupts(); TODO: task run code expects interrupts to be disabled...
+
+	// Test out Rust integration
+	int a = 2;
+	int b = rust_plus_2_callable(a);
+	if (b == 4) {
+		print("Rust integration test passed\n");
+	} else {
+		print("Rust integration test failed\n");
+	}
 
 	task_exec(get_task_list_head());
 
