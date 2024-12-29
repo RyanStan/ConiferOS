@@ -9,6 +9,10 @@
 #	$? = returns the dependencies that are newer than the current target
 #	$* = returns the text that corresponds to % in the target
 
+export PREFIX := $(HOME)/opt/cross
+export TARGET := i686-elf
+export PATH := $(PREFIX)/bin:$(PATH)
+
 SHELL = /bin/sh
 INCLUDES = ./src
 MODULES = build/kernel.asm.o build/kernel.o \
@@ -227,6 +231,10 @@ clean: user_programs_clean
 	rm -rf ${MODULES}
 	rm -rf bin/disk.img
 	rm -rf ./hello.txt
+
+.PHONY: attach_gdb
+attach_gdb:
+	gdb -ex "target remote localhost:1234" -ex "add-symbol-file bin/kernel.elf 0x100000" -ex "directory src"
 	
 # Generate a clangd config
 .PHONY: clangd_config
