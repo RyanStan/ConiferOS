@@ -15,7 +15,7 @@ nop
 OEMIdentifier:		db 'CONIFER '
 BytesPerSector:		dw 0x0200	; Generally ignored by most kernels
 SectorsPerCluster:	db 0x80		; decimal 128
-ReservedSectors:	dw 0x00C8	; Our kernel will be stored in the reserved sectors (decimal 200)
+ReservedSectors: dw 0x0FA1		; Our kernel will be stored in the reserved sectors (4001 sectors, or about 2.04 MB)
 FATCopies:		db 0x02		; Number of file allocation tables on the file system
 RootDirEntries:		dw 0x0040	; Root directory must occupy entire sectors (decimal 64).  This value contain the number of possible (max) entries in the root directory. Its recommended that the number of entries is an even multiple of the BytesPerSector values. The recommended value for FAT16 volumes is 512 entries (compatibility reasons).
 NumSectors:		dw 0x0000	; Not using this
@@ -115,27 +115,98 @@ load32:
 	; in 32 bit mode here
 	; the goal is to load our kernel into memory and jump to it
 	mov eax, 1		; eax will contain the starting sector we want to load from (0 is boot sector)
-	mov ecx, 100		; ecx will contain the total number of sectors we want to load
+	mov ecx, 4000		; ecx will contain the total number of sectors we want to load (2.04 MB MB)
 	mov edi, 0x0100000	; edi will contain the address we want to load these sectors in to (1 MB)
 	call ata_lba_read	; ata_lba_read is the label that will talk with the drive and load the sectors into memory
 	jmp CODE_SEG:0x0100000 	; jump to 1 MB which is the location where we've read the kernel sectors into memory
 
+
+; https://wiki.osdev.org/ATA_read/write_sectors
+;=============================================================================
+; ATA read sectors (LBA mode) 
+;
+; ata/ide is a protocol for communicating with disk drives attached via the motherboard to CPU
+; Primary channel ports
+; Data Port: 0x1F0
+; Error/Features Port: 0x1F1
+; Sector Count: 0x1F2
+; LBA/Sector Number: 0x1F3-0x1F5
+; Drive/Head Select: 0x1F6
+; Status/Command: 0x1F7
+; Alternate Status: 0x3F610
+;
+; Common ATA commands
+; 0x20: Read Sectors (PIO mode)
+; 0xEC: Identify Drive
+; 0xA0: ATAPI Packet Command
+; 0x30: Write Sectors (PIO mode)
+;
+; @param EAX Logical Block Address of sector to start read from
+; @param ECX number of sectors to read
+; @param EDI Address of buffer to put data obtained from disk
+;
+; @return None
+; 
+; Side effect: this will increment EAX.
+;=============================================================================
 ata_lba_read:
-	; ata/ide is a protocol for communicating with disk drives attached via the motherboard to CPU
+	push ecx				; Preserve ecx argument
+.read_loop:
+	; If ecx is 0, then there are 0 more sector to read.
+	test ecx, ecx
+	jz .done
+
+	cmp ecx, 255
+	jl .read_remaining 	; If ECX <= 255, read remaining sectors
+
+	push ecx				; Save ECX in case callee modifies it.
+	mov ecx, 255				; Read 255 sectors
+	call ata_lba_read_inner
+	pop ecx					; Restore sector count
+
+	sub ecx, 255			; Subtract 255 from sectors to read count
+	add edi, 512*255		; Update the output buffer address (512 bytes per sector * 255 sectors)
+	add eax, 255			; Increment LBA by 255.
+	jmp .read_loop
+
+.read_remaining:
+	call ata_lba_read_inner
+
+.done
+	pop ecx
+	ret
+
+; https://wiki.osdev.org/ATA_read/write_sectors
+;=============================================================================
+; ATA read sectors (LBA mode) 
+;
+;
+; @param EAX Logical Block Address of sector to start read from
+; @param CL number of sectors to read (lower 8 bits of ecx register)
+; @param EDI Address of buffer to put data obtained from disk
+;
+; @return None
+; 
+; Side effect: this will increment EAX.
+;=============================================================================
+ata_lba_read_inner:
 	mov ebx, eax 		; backup the logical block address (lba) 
+
 	; send the highest 8 bits of the lba to disk controller
-	shr eax, 24		; shift the eax register 24 bits to the right so that eax contains highest 8 bits of the lba (shr does not wrap)
+	shr eax, 24			; shift the eax register 24 bits to the right so that eax contains highest 8 bits of the lba (shr does not wrap)
 	or eax, 0xE0		; selects the master drive
 	mov dx, 0x01F6		; 0x01F6 is the port that we're expected to write these 8 bits to
-	out dx, al		; al contains the 8 high bits from earlier.  
-				; out instruction copies the value from al to the I/O port specified by dx (copies the address and value to the I/O bus on the motherboard)
-	; Finished sending the highest 8 bits of the lba
+	out dx, al			; al is implicitly set as the lower 8 bits of the eax register. Therefore, this is the high 8 bits of the lba 
+						; out instruction copies the value from al to the I/O port specified by dx (copies the address and value to the I/O bus on the motherboard)
+
 
 	; send the total number of sectors that we are reading to the hard disk controller
-	mov eax, ecx
-	mov dx, 0x01F2		; 0x01F2 --> set sectorcount
+	; (max 255 per transaction because the sector count register on the disk only has 8 bits).
+	mov al, cl	; We have to move cl into al because the out instruction only uses the EAX register.
+
+.send_sector_count:
+	mov dx, 0x01F2		; 0x01F2 --> sectorcount port
 	out dx, al
-	; finished sending the total sectors to read
 	
 	; send low bits of the lba
 	mov eax, ebx		; restore the backup lba
@@ -154,29 +225,31 @@ ata_lba_read:
 	shr eax, 16 
 	out dx, al
 
-	mov dx, 0x01F7		; 0x01F7 --> Command IO Port
+	mov dx, 0x01F7		; 0x01F7 --> Command IO Port (TODO: stuck here?)
 	mov al, 0x20		; 0x0020 --> Read sector(s) command
 	out dx, al
 
-	; Read all sectors into memory
-.next_sector:
-	push ecx		; push ecx onto the stack to save for later (remember it has the total # of sectors we want to read)
+	; Read sectors into memory
+.read_loop:
+	push ecx		; Save remaining sector count.
 
-; checking if we need to read
-.try_again:
+; Wait for the disk drive to be ready.
+.wait_for_ready_drive:
 	mov dx, 0x01F7	
-	in al, dx		; we read the ATA status register into al by reading from the command io port
-	test al, 8		; check to see if the busy bit is set.  If set, the disk drive still has control of the command block registers (still reading)
-	jz .try_again		; jumps back to try_again if the busy bit is set
+	in al, dx				; we read the ATA status register into al by reading from the command io port
+	test al, 8				; check to see if the busy bit is set.  If set, the disk drive still has control of the command block registers (still reading)
+	jz .wait_for_ready_drive		; jumps back to try_again if the busy bit is set
 
-	; we need to read 256 words (512 bytes, or one sector) at a time
+	; Read one sector (512 bytes, or 256 words) to the address at EDI
  	mov ecx, 256
-	mov dx, 0x01F0
+	mov dx, 0x01F0	; data port
 	rep insw		; rep insw reads a word from port 0x01F0 and stores it into 0x0100000 (1 MB, specified by edi register)
-	pop ecx			; restores the ecx that we saved via push earlier (contains count of sectors left to read
-	loop .next_sector	; decrements ecx register (contains # registers to read) until it hits 0 and we've read all sectors
+					; insw reads from the io port specified by dx into the memory location specified by edi.
+					; The instruction will increment or decrement edi as necessary. 
+					; The rep instruction repeats the insw instruction n times, where n is the value in the ecx register
+	pop ecx			; Restore remaing sector count (255) so that we can decrement it.
+	loop .read_loop	; decrements ecx register (contains # registers to read) until it hits 0 and we've read all sectors
 	ret
-	
 
 times 510-($ - $$) db 0 ; pad our code with 0s up to 510 bytes
 dw 0xAA55		; Intel machines are little endian so this will be flipped to 0x55AA
