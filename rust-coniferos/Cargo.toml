@@ -15,4 +15,7 @@ panic = "abort" # disable stack unwinding on panic
 name = "rust_coniferos"
 crate-type = ["staticlib"]
 
+[build-dependencies]
+cbindgen = "0.27.0"
+
 [dependencies]

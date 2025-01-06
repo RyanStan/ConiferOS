@@ -13,6 +13,8 @@ export PREFIX := $(HOME)/opt/cross
 export TARGET := i686-elf
 export PATH := $(PREFIX)/bin:$(PATH)
 
+MAKEFILE_DIR := $(CURDIR)
+
 SHELL = /bin/sh
 INCLUDES = ./src
 MODULES = build/kernel.asm.o build/kernel.o \
@@ -55,6 +57,7 @@ USER_PROG_6 = echo
 RUST_LIB_DIR = rust-coniferos/target/i686-unknown-none/release
 RUST_LIB = -l:librust_coniferos.a
 RUST_LIB_FILE = $(RUST_LIB_DIR)/librust_coniferos.a
+RUST_INTERFACE_H = rust_coniferos.h
 
 all: user_programs bin/disk.img
 
@@ -81,12 +84,12 @@ bin/os.bin: bin/boot.bin bin/kernel.bin
 	dd if=/dev/zero bs=1048576 count=16 >> bin/os.bin # Fills up rest of disk with 16, 1 MB sized blocks of zeros (this will be used by Linux to store our file data)
 
 # kernel.bin is the binary file which contains all the kernel code
-bin/kernel.bin: $(MODULES) $(RUST_LIB_FILE)
+bin/kernel.bin: $(RUST_LIB_FILE) $(MODULES)
 	i686-elf-gcc $(FLAGS) -ffreestanding -O0 -nostdlib  -T src/linker.ld $(MODULES) -L$(RUST_LIB_DIR) $(RUST_LIB) -o bin/kernel.elf
 	i686-elf-objcopy -O binary bin/kernel.elf bin/kernel.bin
 
 $(RUST_LIB_FILE):
-	cd rust-coniferos && cargo build --release
+	cd rust-coniferos && cargo build --release && cp ${RUST_INTERFACE_H} ${MAKEFILE_DIR}/src/rust_interface/
 
 # boot.bin contains our bootloader code, and is what loads the kernel into memory.
 bin/boot.bin: src/boot/boot.asm
