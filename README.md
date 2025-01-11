@@ -19,7 +19,7 @@ You can find the emulated hardware specs here: [i440fx PC](https://www.qemu.org/
 - `scripts/build_binutils.sh`
 - `scripts/build_gcc.sh`
 ### Building and Running
-- `scripts/build.sh`
+- `make`
 - `make run`
 
 ## Overview
@@ -273,6 +273,17 @@ Currently, the ELF loader only supports executable files (`e_type` = `ET_EXEC`).
 does not support relocatable files or dynamic shared libraries.
 
 ELF Specification that was used as reference: https://refspecs.linuxfoundation.org/elf/elf.pdf
+
+### Rust
+The [Rust ConiferOS crate](./rust-coniferos/) is compiled and linked to
+kernel.elf during the build process. 
+
+To build Rust code for our bare metal host, we define a custom target,
+[i686-unknown-known](./rust-coniferos/i686-unknown-none.json), and
+we compile the core components of the Rust standard library ourselves.
+
+We use [mozilla/cbindgen](https://github.com/mozilla/cbindgen) to automatically generate C bindings for Rust ConiferOS.
+These bindings are stored in [src/rust_interface/rust_coniferos.h](./src/rust_interface/rust_coniferos.h).
 
 
 ## What's Next?
